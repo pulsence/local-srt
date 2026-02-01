@@ -8,283 +8,104 @@ from __future__ import annotations
 import argparse
 import dataclasses
 import os
-import tempfile
-import time
+import sys
 import traceback
 from pathlib import Path
-from typing import Any, List, Optional, Tuple
+from typing import List, Optional, Tuple
 
-# Local imports from refactored modules
-from .audio import detect_silences, to_wav_16k_mono
+from .api import load_model, transcribe_file
 from .batch import default_output_for, expand_inputs, preflight_one
 from .config import MODE_ALIASES, PRESETS, apply_overrides, load_config_file
-from .logging_utils import die, format_duration, log, progress_done, progress_line, warn
+from .events import (
+    ErrorEvent,
+    FileCompleteEvent,
+    FileStartEvent,
+    LogEvent,
+    ModelLoadEvent,
+    ProgressEvent,
+    StageEvent,
+    WarnEvent,
+)
+from .logging_utils import format_duration
 from .model_management import (
-    delete_model_cli,
+    delete_model,
     diagnose,
-    download_model_cli,
+    download_model,
     list_available_models,
     list_downloaded_models,
 )
-from .models import TOOL_VERSION, ResolvedConfig
-from .output_writers import (
-    segments_to_jsonable,
-    write_ass,
-    write_json_bundle,
-    write_srt,
-    write_txt,
-    write_vtt,
-)
-from .subtitle_generation import (
-    apply_silence_alignment,
-    chunk_segments_to_subtitles,
-    chunk_words_to_subtitles,
-    collect_words,
-    hygiene_and_polish,
-    words_to_subtitles,
-)
-from .system import ensure_parent_dir, ffmpeg_ok, probe_duration_seconds
-from .whisper_wrapper import init_whisper_model
+from .models import ResolvedConfig
+from . import __version__
+from .system import ensure_parent_dir, ffmpeg_ok
 
 
-# ============================================================
-# Run one file
-# ============================================================
+def die(msg: str, code: int = 1) -> int:
+    print(f"ERROR: {msg}", file=sys.stderr, flush=True)
+    return code
 
-def run_one(
-    *,
-    input_path: Path,
-    output_path: Path,
-    fmt: str,
-    transcript_path: Optional[Path],
-    segments_path: Optional[Path],
-    json_bundle_path: Optional[Path],
-    args: argparse.Namespace,
-    cfg: ResolvedConfig,
-    quiet: bool,
-    show_progress: bool,
-) -> int:
-    """Process a single media file and generate subtitles.
 
-    Args:
-        input_path: Path to input media file
-        output_path: Path for primary output file
-        fmt: Output format (srt/vtt/ass/txt/json)
-        transcript_path: Optional path for plain text transcript
-        segments_path: Optional path for segments JSON
-        json_bundle_path: Optional path for complete JSON bundle
-        args: Command-line arguments namespace
-        cfg: Resolved configuration
-        quiet: Suppress non-error output
-        show_progress: Show transcription progress
+def create_cli_handler(quiet: bool, show_progress: bool):
+    state = {"progress_active": False}
 
-    Returns:
-        Exit code (0 for success, non-zero for failure)
-    """
-    if not ffmpeg_ok():
-        return die("ffmpeg not found on PATH. Install it or add it to PATH.", 2)
+    def clear_progress() -> None:
+        if not state["progress_active"]:
+            return
+        sys.stdout.write("\r" + (" " * 160) + "\r")
+        sys.stdout.flush()
+        state["progress_active"] = False
 
-    ensure_parent_dir(output_path)
-    if transcript_path:
-        ensure_parent_dir(transcript_path)
-    if segments_path:
-        ensure_parent_dir(segments_path)
-    if json_bundle_path:
-        ensure_parent_dir(json_bundle_path)
+    def handler(event) -> None:
+        if isinstance(event, ProgressEvent):
+            if quiet or not show_progress:
+                return
+            pct = f"{event.percent:5.1f}%"
+            media_t = format_duration(event.media_time)
+            eta = f"ETA {format_duration(event.eta)}" if event.eta else ""
+            msg = f"   {pct} segs:{event.segment_count:5d} | media_t={media_t} | {eta}".rstrip()
+            sys.stdout.write("\r" + msg[:160].ljust(160))
+            sys.stdout.flush()
+            state["progress_active"] = True
+            return
 
-    tmpdir = args.tmpdir if args.tmpdir else None
-    fd, tmp_wav = tempfile.mkstemp(prefix="srtgen_", suffix=".wav", dir=tmpdir)
-    os.close(fd)
+        if not quiet:
+            clear_progress()
 
-    started = time.time()
-    try:
-        log(f"Input: {input_path}", quiet=quiet)
-        log(f"Output: {output_path}", quiet=quiet)
-
-        if args.dry_run:
-            log("Dry run: skipping transcription.", quiet=quiet)
-            return 0
-
-        log("1/5 Converting audio with ffmpeg...", quiet=quiet)
-        to_wav_16k_mono(str(input_path), tmp_wav)
-
-        log("2/5 Loading model...", quiet=quiet)
-        model, device_used, compute_type_used = init_whisper_model(
-            model_name=args.model,
-            device=args.device,
-            quiet=quiet,
-            strict_cuda=args.strict_cuda,
-        )
-
-        log("3/5 Transcribing...", quiet=quiet)
-        t0 = time.time()
-
-        segments_iter, info = model.transcribe(
-            tmp_wav,
-            vad_filter=cfg.vad_filter,
-            language=args.language,
-            word_timestamps=cfg.word_timestamps,
-        )
-
-        seg_list: List[Any] = []
-        dur_total = probe_duration_seconds(str(tmp_wav))
-        last_ratio = 0.0
-
-        # Progress uses:
-        # - segment time in media (seg.end)
-        # - wall elapsed
-        # - realtime factor = seg.end / elapsed
-        # - ETA in wall-time = (dur_total - seg.end) / realtime_factor
-        for idx, seg in enumerate(segments_iter, start=1):
-            seg_list.append(seg)
-
-            pct = ""
-            eta = ""
-            rt = ""
-
-            now = time.time()
-            elapsed = max(0.001, now - t0)
-            media_t = float(getattr(seg, "end", 0.0))
-            if media_t > 0:
-                rtf = media_t / elapsed  # media seconds per wall second
-                rt = f"{rtf:4.2f}x"
-
-            if dur_total and dur_total > 0:
-                ratio = media_t / dur_total
-                ratio = max(last_ratio, ratio)
-                ratio = min(1.0, ratio)
-                last_ratio = ratio
-                pct = f"{ratio * 100:5.1f}%"
-
-                if media_t > 0:
-                    rtf = media_t / elapsed
-                    if rtf > 0.01:
-                        remaining_media = max(0.0, dur_total - media_t)
-                        eta_sec = remaining_media / rtf
-                        eta = f"ETA {format_duration(eta_sec)}"
-
-            progress_line(
-                f"   {pct} segs:{idx:5d} | media_t={format_duration(media_t)} | {rt} {eta}",
-                enabled=show_progress,
-                quiet=quiet,
-            )
-
-        progress_done(enabled=show_progress, quiet=quiet)
-        log(f"   Transcription complete: {len(seg_list)} segments in {format_duration(time.time() - t0)}", quiet=quiet)
-
-        log("4/5 Chunking + formatting...", quiet=quiet)
-        t1 = time.time()
-        silences: List[Tuple[float, float]] = []
-        if cfg.use_silence_split:
-            silences = detect_silences(
-                tmp_wav,
-                min_silence_dur=cfg.silence_min_dur,
-                silence_threshold_db=cfg.silence_threshold_db,
-            )
-
-        words = collect_words(seg_list) if cfg.word_timestamps else []
-        if args.word_level:
-            if not words:
-                return die("Word-level output requested but no word timestamps are available.", 2)
-            subs = words_to_subtitles(words)
-        else:
-            if cfg.use_silence_split and words:
-                subs = chunk_words_to_subtitles(words, cfg, silences)
+        if isinstance(event, LogEvent) and not quiet:
+            print(event.message)
+        elif isinstance(event, WarnEvent) and not quiet:
+            print(f"WARNING: {event.message}", file=sys.stderr)
+        elif isinstance(event, ErrorEvent):
+            print(f"ERROR: {event.message}", file=sys.stderr)
+        elif isinstance(event, StageEvent) and not quiet:
+            print(f"{event.stage_number}/{event.total_stages} {event.stage}...")
+        elif isinstance(event, FileStartEvent) and not quiet:
+            print(f"File: {event.input_path}")
+        elif isinstance(event, FileCompleteEvent) and not quiet:
+            if event.success:
+                print(f"Done: {event.output_path}")
             else:
-                if cfg.use_silence_split and not words:
-                    warn("Silence splitting requested but no word timestamps returned; falling back.", quiet=quiet)
-                subs = chunk_segments_to_subtitles(seg_list, cfg)
+                print(f"Failed: {event.input_path} ({event.error})")
+        elif isinstance(event, ModelLoadEvent) and not quiet:
+            if event.success:
+                print(f"Model loaded: {event.model_name} ({event.device}, {event.compute_type})")
+            else:
+                print(f"Model load failed: {event.model_name} ({event.detail})", file=sys.stderr)
 
-        if cfg.use_silence_split and silences:
-            subs = apply_silence_alignment(subs, silences)
-        subs = hygiene_and_polish(
-            subs,
-            min_gap=cfg.min_gap,
-            pad=cfg.pad,
-            silence_intervals=silences if cfg.use_silence_split else None,
-        )
-        log(f"   Chunking complete: {len(subs)} subtitle blocks in {format_duration(time.time() - t1)}", quiet=quiet)
-
-        log("5/5 Writing outputs...", quiet=quiet)
-
-        if fmt == "srt":
-            write_srt(subs, output_path, max_chars=cfg.max_chars, max_lines=cfg.max_lines)
-        elif fmt == "vtt":
-            write_vtt(subs, output_path, max_chars=cfg.max_chars, max_lines=cfg.max_lines)
-        elif fmt == "ass":
-            write_ass(subs, output_path, max_chars=cfg.max_chars, max_lines=cfg.max_lines)
-        elif fmt == "txt":
-            write_txt(subs, output_path)
-        elif fmt == "json":
-            write_json_bundle(
-                output_path,
-                input_file=str(input_path),
-                device_used=device_used,
-                compute_type_used=compute_type_used,
-                cfg=cfg,
-                segments=seg_list,
-                subs=subs,
-                tool_version=TOOL_VERSION,
-            )
-        else:
-            return die(f"Unknown format: {fmt}", 2)
-
-        # Optional side outputs
-        if transcript_path:
-            # transcript from subtitle blocks
-            write_txt(subs, transcript_path)
-
-        if segments_path:
-            import json
-
-            ensure_parent_dir(segments_path)
-            tmp = segments_path.with_suffix(segments_path.suffix + ".tmp")
-            tmp.write_text(
-                json.dumps(
-                    {
-                        "input_file": str(input_path),
-                        "segments": segments_to_jsonable(seg_list, include_words=cfg.word_timestamps),
-                    },
-                    ensure_ascii=False,
-                    indent=2,
-                ),
-                encoding="utf-8",
-            )
-            os.replace(tmp, segments_path)
-
-        if json_bundle_path:
-            write_json_bundle(
-                json_bundle_path,
-                input_file=str(input_path),
-                device_used=device_used,
-                compute_type_used=compute_type_used,
-                cfg=cfg,
-                segments=seg_list,
-                subs=subs,
-                tool_version=TOOL_VERSION,
-            )
-
-        log(f"Done: {output_path} (total {format_duration(time.time() - started)})", quiet=quiet)
-        return 0
-
-    finally:
-        if not args.keep_wav and os.path.exists(tmp_wav):
-            try:
-                os.remove(tmp_wav)
-            except OSError:
-                pass
+    return handler
 
 
-# ============================================================
-# CLI
-# ============================================================
+def emit_event(handler, event) -> None:
+    if handler is None:
+        return
+    emit = getattr(handler, "emit", None)
+    if callable(emit):
+        emit(event)
+    else:
+        handler(event)
+
 
 def main() -> int:
-    """Main entry point for the srtgen command-line tool.
-
-    Returns:
-        Exit code (0 for success, non-zero for failure)
-    """
+    """Main entry point for the srtgen command-line tool."""
     ap = argparse.ArgumentParser(description="Local SRT/VTT generator (faster-whisper + ffmpeg)")
     ap.add_argument("inputs", nargs="*", help="Media file(s), directory, or glob pattern(s)")
     ap.add_argument("--glob", default=None, help="Additional glob pattern to include (optional)")
@@ -349,11 +170,19 @@ def main() -> int:
     args = ap.parse_args()
 
     if args.version:
-        print(TOOL_VERSION)
+        print(__version__)
         return 0
 
     if args.diagnose:
-        diagnose()
+        info = diagnose()
+        print(f"tool_version: {info.tool_version}")
+        print(f"python: {info.python_version}")
+        print(f"platform: {info.platform}")
+        print(f"ffmpeg: {info.ffmpeg_version}")
+        print(f"ffprobe: {info.ffprobe_version}")
+        print(f"faster_whisper: {info.faster_whisper_version}")
+        print(f"PATH ffmpeg: {info.ffmpeg_path}")
+        print(f"PATH ffprobe: {info.ffprobe_path}")
         return 0
 
     if args.list_models or args.list_available_models or args.download_model or args.delete_model:
@@ -374,13 +203,17 @@ def main() -> int:
             print("Available models:")
             print("  " + ", ".join(list_available_models()))
         if args.download_model:
-            rc = download_model_cli(args.download_model)
-            if rc != 0:
-                return rc
+            try:
+                path = download_model(args.download_model)
+                print(f"Downloaded {args.download_model} to {path}")
+            except Exception as exc:
+                return die(str(exc), 2)
         if args.delete_model:
-            rc = delete_model_cli(args.delete_model)
-            if rc != 0:
-                return rc
+            try:
+                path = delete_model(args.delete_model)
+                print(f"Deleted cached model: {args.delete_model} ({path})")
+            except Exception as exc:
+                return die(str(exc), 2)
         return rc
 
     quiet = args.quiet
@@ -396,7 +229,6 @@ def main() -> int:
             )
         args.mode = MODE_ALIASES[mode_key]
 
-    # Expand inputs (files, dirs, globs)
     if not args.inputs:
         return die("No input files provided.", 2)
     files = expand_inputs(args.inputs, args.glob)
@@ -404,16 +236,14 @@ def main() -> int:
     if not files:
         return die("No input files found after expansion.", 2)
 
-    # Compute outdir/root
     outdir = Path(args.outdir) if args.outdir else None
     if outdir:
-        ensure_parent_dir(outdir / "dummy.txt")  # ensures outdir's parent exists
+        ensure_parent_dir(outdir / "dummy.txt")
         outdir.mkdir(parents=True, exist_ok=True)
 
     if args.root:
         base_root = Path(args.root)
     else:
-        # best-effort common parent for keep-structure
         base_root = None
         if args.keep_structure and len(files) > 1:
             try:
@@ -423,7 +253,6 @@ def main() -> int:
             except Exception:
                 base_root = None
 
-    # Build config: defaults -> config file -> preset -> CLI overrides
     cfg = ResolvedConfig()
 
     try:
@@ -436,7 +265,6 @@ def main() -> int:
     if args.mode:
         cfg = apply_overrides(cfg, PRESETS[args.mode])
 
-    # CLI overrides
     if args.max_chars is not None:
         cfg.max_chars = args.max_chars
     if args.max_lines is not None:
@@ -472,24 +300,33 @@ def main() -> int:
     if args.word_level or cfg.use_silence_split:
         cfg.word_timestamps = True
 
-    # Basic dependency check
     if not ffmpeg_ok():
         return die("ffmpeg not found on PATH. Install it or add it to PATH.", 2)
 
-    # If user provided --output, require single file expansion
     if args.output is not None and len(files) != 1:
         return die("--output may only be used when exactly one input file is provided (after expansion).", 2)
 
-    # Show resolved config for transparency
     if args.dry_run and not quiet:
         import json
-        log("Resolved config:", quiet=quiet)
-        log(json.dumps(dataclasses.asdict(cfg), indent=2), quiet=quiet)
 
-    # Run (single or batch)
+        print("Resolved config:")
+        print(json.dumps(dataclasses.asdict(cfg), indent=2))
+
+    handler = create_cli_handler(quiet, show_progress)
+    model = None
+    device_used = "unknown"
+    compute_type_used = "unknown"
+    if not args.dry_run:
+        try:
+            model, device_used, compute_type_used = load_model(
+                args.model, args.device, args.strict_cuda, handler
+            )
+        except Exception as exc:
+            return die(str(exc), 2)
+
     failures: List[Tuple[Path, str]] = []
+
     for f in files:
-        # Determine output path(s)
         if args.output:
             primary_out = Path(args.output)
         else:
@@ -500,60 +337,88 @@ def main() -> int:
             failures.append((f, reason))
             if not args.continue_on_error:
                 return die(reason, 2)
-            warn(f"{f}: {reason}", quiet=quiet)
+            print(f"WARNING: {f}: {reason}", file=sys.stderr)
             continue
 
-        # Side outputs
         def side_path(user_path: Optional[str], ext: str) -> Optional[Path]:
             if not user_path:
                 return None
             p = Path(user_path)
             if p.exists() and p.is_dir():
-                # directory: mirror naming there
                 return (p / f.name).with_suffix(ext)
             if user_path.endswith(os.sep) or user_path.endswith("/"):
-                # treat as directory-like
                 p.mkdir(parents=True, exist_ok=True)
                 return (p / f.name).with_suffix(ext)
-            # explicit file path
             return p
 
         transcript_out = side_path(args.emit_transcript, ".txt")
         segments_out = side_path(args.emit_segments, ".segments.json")
         bundle_out = side_path(args.emit_bundle, ".bundle.json") if args.emit_bundle else None
 
+        emit_event(
+            handler,
+            FileStartEvent(input_path=str(f), output_path=str(primary_out)),
+        )
+
         try:
-            rc = run_one(
+            result = transcribe_file(
                 input_path=f,
                 output_path=primary_out,
                 fmt=args.format,
+                cfg=cfg,
+                model=model,
+                device_used=device_used,
+                compute_type_used=compute_type_used,
+                language=args.language,
+                word_level=args.word_level,
                 transcript_path=transcript_out,
                 segments_path=segments_out,
                 json_bundle_path=bundle_out,
-                args=args,
-                cfg=cfg,
-                quiet=quiet,
-                show_progress=show_progress,
+                dry_run=args.dry_run,
+                keep_wav=args.keep_wav,
+                tmpdir=Path(args.tmpdir) if args.tmpdir else None,
+                event_handler=handler,
             )
-            if rc != 0:
-                failures.append((f, f"failed with exit code {rc}"))
-                if not args.continue_on_error:
-                    return rc
         except KeyboardInterrupt:
             return die("Interrupted by user.", 130)
         except Exception as e:
             if args.debug:
                 traceback.print_exc()
             failures.append((f, str(e)))
+            emit_event(
+                handler,
+                FileCompleteEvent(
+                    input_path=str(f),
+                    output_path=str(primary_out),
+                    success=False,
+                    error=str(e),
+                ),
+            )
             if not args.continue_on_error:
                 return die(f"{f}: {e}", 1)
-            warn(f"{f}: {e}", quiet=quiet)
+            print(f"WARNING: {f}: {e}", file=sys.stderr)
+            continue
+
+        emit_event(
+            handler,
+            FileCompleteEvent(
+                input_path=str(f),
+                output_path=str(primary_out),
+                success=result.success,
+                error=result.error,
+            ),
+        )
+
+        if not result.success:
+            failures.append((f, result.error or "failed"))
+            if not args.continue_on_error:
+                return die(result.error or "failed", 1)
 
     if failures:
         if not quiet:
-            log("\nSummary: failures:", quiet=quiet)
+            print("\nSummary: failures:")
             for f, msg in failures:
-                log(f"  - {f}: {msg}", quiet=quiet)
+                print(f"  - {f}: {msg}")
         return 1
 
     return 0

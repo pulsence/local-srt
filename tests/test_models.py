@@ -1,6 +1,7 @@
 """Tests for the models module."""
 import pytest
-from local_srt.models import TOOL_VERSION, ResolvedConfig, SubtitleBlock, WordItem
+from local_srt import __version__
+from local_srt.models import ResolvedConfig, SubtitleBlock, WordItem
 
 
 class TestToolVersion:
@@ -8,13 +9,13 @@ class TestToolVersion:
 
     def test_tool_version_exists(self):
         """Test that TOOL_VERSION is defined."""
-        assert TOOL_VERSION is not None
-        assert isinstance(TOOL_VERSION, str)
-        assert len(TOOL_VERSION) > 0
+        assert __version__ is not None
+        assert isinstance(__version__, str)
+        assert len(__version__) > 0
 
     def test_tool_version_format(self):
         """Test that TOOL_VERSION follows semantic versioning."""
-        parts = TOOL_VERSION.split(".")
+        parts = __version__.split(".")
         assert len(parts) >= 2  # At least major.minor
 
 

@@ -9,22 +9,22 @@ punctuation-aware chunking, pacing heuristics, and presets for YouTube, Shorts, 
 This project was primarily created for my personal use. I will not be responding to pull requests
 or issues unless they directly impact my use cases. Feel free to fork and make whatever changes
 you would like. I was frustrated that a "turn key" local SRT generator was not easily 
-available, now there is.
+available; now there is.
 
-I generated this tool primarily using an AI code assistant and so all the code branches are not
-explored or tested, but they should be farely correct.
+I generated this tool primarily using an AI code assistant. The codebase has test coverage,
+but not every path is exhaustively validated.
 
 ## Features
 - Fully local transcription (no remote API calls)
 - Uses `faster-whisper` for high-quality speech recognition
 - Intelligent subtitle chunking:
-  - Punctuation-aware splitting (strong → medium → weak)
+  - Punctuation-aware splitting (strong -> medium -> weak)
   - Reading-speed constraints (characters per second)
   - Minimum and maximum subtitle durations
 - Preset modes:
-  - `yt` – standard YouTube captions
-  - `shorts` – fast-paced, compact captions
-  - `podcast` – slower pacing, longer phrasing
+  - `yt` - standard YouTube captions
+  - `shorts` - fast-paced, compact captions
+  - `podcast` - slower pacing, longer phrasing
 - CUDA support with automatic CPU fallback
 - Progress indicators with segment-based timing
 - Supports batch processing of files
@@ -40,40 +40,17 @@ explored or tested, but they should be farely correct.
   - NVIDIA GPU + CUDA drivers for `--device cuda`
 
 ## Installation
-### Option A: pipx (recommended)
-```bash
-python -m pip install --upgrade pipx
-pipx ensurepath
-pipx install .
-```
 
-From GitHub:
+Install the current release from PyPI:
 
 ```bash
-pipx install git+https://github.com/your-org/local-srt.git
+python -m pip install local-srt
 ```
 
----
+Install from a GitHub download:
 
-### Option B: Virtual environment
-
-```bash
-python -m venv .venv
-```
-
-Activate:
-
-**Windows**
-```powershell
-.venv\Scripts\activate
-```
-
-**macOS / Linux**
-```bash
-source .venv/bin/activate
-```
-
-Install:
+1) Download the repository (zip) from GitHub and extract it.
+2) From the extracted folder, run:
 
 ```bash
 python -m pip install .
@@ -124,10 +101,10 @@ ASS output:
 srtgen input.mp4 --format ass
 ```
 
-Word-level output:
+Word-level output (requires word timestamps):
 
 ```bash
-srtgen input.mp4 --word-level
+srtgen input.mp4 --word-level --word-timestamps
 ```
 
 Preset modes:
@@ -142,6 +119,93 @@ CUDA (with fallback):
 
 ```bash
 srtgen input.mp4 --device cuda
+```
+
+---
+
+## Library Usage
+
+Minimal usage:
+
+```python
+from pathlib import Path
+from local_srt import ResolvedConfig, load_model, transcribe_file
+
+model, device_used, compute_type = load_model(
+    model_name="small",
+    device="auto",
+    strict_cuda=False,
+)
+
+result = transcribe_file(
+    input_path=Path("input.mp3"),
+    output_path=Path("output.srt"),
+    fmt="srt",
+    cfg=ResolvedConfig(),
+    model=model,
+    device_used=device_used,
+    compute_type_used=compute_type,
+)
+
+print(result.success, result.output_path)
+```
+
+With event handling:
+
+```python
+from local_srt import EventEmitter, LogEvent, ProgressEvent
+
+emitter = EventEmitter()
+
+def handler(event):
+    if isinstance(event, LogEvent):
+        print(event.message)
+    elif isinstance(event, ProgressEvent):
+        print(f"{event.percent:5.1f}%")
+
+emitter.subscribe(handler)
+```
+
+Pass the handler into API calls:
+
+```python
+model, device_used, compute_type = load_model(
+    model_name="small",
+    device="auto",
+    strict_cuda=False,
+    event_handler=emitter,
+)
+
+result = transcribe_file(
+    input_path=Path("input.mp3"),
+    output_path=Path("output.srt"),
+    fmt="srt",
+    cfg=ResolvedConfig(),
+    model=model,
+    device_used=device_used,
+    compute_type_used=compute_type,
+    event_handler=emitter,
+)
+```
+
+Batch usage (single model load):
+
+```python
+from local_srt import transcribe_batch
+
+inputs = [Path("a.mp3"), Path("b.mp3")]
+batch = transcribe_batch(
+    input_paths=inputs,
+    outdir=Path("out"),
+    fmt="srt",
+    cfg=ResolvedConfig(),
+    model=model,
+    device_used=device_used,
+    compute_type_used=compute_type,
+    event_handler=emitter,
+)
+
+print(batch.successful, batch.failed)
 ```
 
 ---

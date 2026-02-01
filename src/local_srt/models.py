@@ -2,7 +2,6 @@
 """Data models for Local SRT.
 
 This module contains all data classes used throughout the application:
-- TOOL_VERSION: Version constant
 - ResolvedConfig: Configuration settings dataclass
 - SubtitleBlock: Represents a subtitle cue with timing and text
 - WordItem: Represents a single transcribed word with timing
@@ -11,13 +10,6 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from typing import List
-
-
-# ============================================================
-# Versioning
-# ============================================================
-
-TOOL_VERSION = "0.1.1"
 
 
 # ============================================================

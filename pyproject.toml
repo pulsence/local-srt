@@ -4,11 +4,12 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "local-srt"
-version = "0.1.1"
+version = "0.2.0"
 description = "Local SRT generator using faster-whisper + ffmpeg"
 readme = "README.md"
 requires-python = ">=3.10"
-license = { text = "MIT" }
+license = "MIT"
+license-files = ["LICENSE"]
 authors = [
   { name = "Timothy Eck", email = "public@verbumcaro.com" }
 ]
@@ -16,7 +17,6 @@ keywords = ["subtitles", "srt", "whisper", "faster-whisper", "ffmpeg", "transcri
 classifiers = [
   "Development Status :: 3 - Alpha",
   "Intended Audience :: End Users/Desktop",
-  "License :: OSI Approved :: MIT License",
   "Programming Language :: Python :: 3",
   "Programming Language :: Python :: 3.10",
   "Programming Language :: Python :: 3.11",
@@ -43,6 +43,8 @@ test = [
 Homepage = "https://github.com/pulsence/local_srt"
 Repository = "https://github.com/pulsence/local_srt"
 Issues = "https://github.com/pulsence/local_srt/issues"
+Documentation = "https://github.com/pulsence/local_srt#readme"
+Changelog = "https://github.com/pulsence/local_srt/releases"
 
 [project.scripts]
 srtgen = "local_srt.cli:main"
@@ -56,8 +58,8 @@ package-dir = {"" = "src"}
 [tool.setuptools.packages.find]
 where = ["src"]
 
-[tool.setuptools.package-data]
-"local_srt" = ["configs/*.json"]
+[tool.setuptools.data-files]
+"configs" = ["configs/*.json"]
 
 
 # -----------------------------
