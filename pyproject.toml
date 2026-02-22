@@ -81,6 +81,8 @@ python_classes = ["Test*"]
 python_functions = ["test_*"]
 addopts = [
   "-v",
+  "-m",
+  "not integration",
   "--cov=local_srt",
   "--cov-report=term-missing",
   "--cov-report=html",

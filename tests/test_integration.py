@@ -24,7 +24,7 @@ from local_srt.subtitle_generation import (
 )
 from local_srt.system import ffmpeg_ok
 from local_srt.whisper_wrapper import init_whisper_model_internal
-from tests.helpers import compare_srt
+from tests.helpers import compare_srt_timing
 
 
 pytestmark = [pytest.mark.integration]
@@ -215,6 +215,8 @@ def test_integration_audio_fixture(
                 f"Baseline missing for {fixture_key}. "
                 "Run pytest -m integration --update-baselines to generate it."
             )
+
+        compare_srt_timing(out_path, baseline_path)
 
         # Compare text similarity (WER) against baseline output.
         baseline_text = _extract_srt_text(baseline_path)

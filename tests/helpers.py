@@ -87,3 +87,43 @@ def compare_srt(actual_path: Path, expected_path: Path, time_tol: float = 0.05) 
                 )
             )
             raise AssertionError(f"Text mismatch in cue {idx}\n{diff}")
+
+
+def compare_srt_timing(actual_path: Path, expected_path: Path, time_tol: float = 0.05) -> None:
+    """Compare SRT timing only, tolerating small timestamp differences."""
+    actual_text = Path(actual_path).read_text(encoding="utf-8")
+    expected_text = Path(expected_path).read_text(encoding="utf-8")
+
+    actual = _parse_srt(Path(actual_path))
+    expected = _parse_srt(Path(expected_path))
+
+    if len(actual) != len(expected):
+        diff = "\n".join(
+            difflib.unified_diff(
+                expected_text.splitlines(),
+                actual_text.splitlines(),
+                fromfile="expected",
+                tofile="actual",
+                lineterm="",
+            )
+        )
+        raise AssertionError(f"Cue count mismatch: {len(actual)} != {len(expected)}\n{diff}")
+
+    for idx, (act, exp) in enumerate(zip(actual, expected), start=1):
+        a_start, a_end, _ = act
+        e_start, e_end, _ = exp
+        if abs(a_start - e_start) > time_tol or abs(a_end - e_end) > time_tol:
+            diff = "\n".join(
+                difflib.unified_diff(
+                    expected_text.splitlines(),
+                    actual_text.splitlines(),
+                    fromfile="expected",
+                    tofile="actual",
+                    lineterm="",
+                )
+            )
+            raise AssertionError(
+                "Timestamp mismatch in cue "
+                f"{idx}: expected ({e_start:.3f}, {e_end:.3f}) "
+                f"got ({a_start:.3f}, {a_end:.3f})\n{diff}"
+            )

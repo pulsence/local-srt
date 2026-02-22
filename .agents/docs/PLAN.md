@@ -59,7 +59,7 @@ Document the current tool as-is: installation, all CLI flags, presets, batch pro
 
 ---
 
-## Phase 2: Test Infrastructure
+## Phase 2: Test Infrastructure (COMPLETED)
 
 Implement before any other code changes. All subsequent changes are only safe once regression coverage exists.
 
@@ -133,7 +133,7 @@ Extend the test suite with end-to-end tests using real voice audio run through a
 
 ---
 
-### 2.3: Code Review — Phase 2
+### 2.3: Code Review — Phase 2 (COMPLETED)
 
 **Tasks**:
 
@@ -145,7 +145,7 @@ Extend the test suite with end-to-end tests using real voice audio run through a
 
 ---
 
-### 2.4: Changelog — Phase 2
+### 2.4: Changelog — Phase 2 (COMPLETED)
 
 **Tasks**:
 
