@@ -12,6 +12,7 @@ __pycache__/
 htmlcov/
 report.html
 dist/
+.venv-wls/
 
 .claude/
 .vscode/

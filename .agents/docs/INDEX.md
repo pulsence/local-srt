@@ -52,6 +52,9 @@ See [ARCHITECTURE.md](./ARCHITECTURE.md) for detailed package structure and key 
 ## Commands
 
 ```bash
+# WLS: use the project venv
+source .venv-wls/bin/activate
+
 # Install (dev)
 pip install -e ".[dev]"
 
