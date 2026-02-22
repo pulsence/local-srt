@@ -46,7 +46,7 @@ See [ARCHITECTURE.md](./ARCHITECTURE.md) for detailed package structure and key 
 ## Developer Guides
 
 - [CREATE_PLAN.md](./CREATE_PLAN.md) - How to create task plans
-- [COMMIT_MESSAGE.md](./COMMIT_MESSAGE.md) - Commit message format
+- Always use the commit message format in [COMMIT_MESSAGE.md](./COMMIT_MESSAGE.md).
 - [CODING_PATTERNS.md](./CODING_PATTERNS.md) - Coding conventions
 
 ## Commands

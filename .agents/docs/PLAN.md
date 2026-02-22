@@ -14,11 +14,11 @@ Apply after every task block:
 
 ---
 
-## Phase 1: Initial Documentation
+## Phase 1: Initial Documentation (COMPLETED)
 
 Establish a user-facing guide that reflects the current state of the tool before any new features are added. Every subsequent phase updates this guide as its features ship. `CHANGELOG.md` is used exclusively for version-tagged changelog entries — not general documentation.
 
-### 1.1: Create USER_GUIDE.md
+### 1.1: Create USER_GUIDE.md (COMPLETED)
 
 Document the current tool as-is: installation, all CLI flags, presets, batch processing, and config file usage. This becomes the canonical user reference and is updated incrementally in every later phase.
 
@@ -49,7 +49,7 @@ Document the current tool as-is: installation, all CLI flags, presets, batch pro
 
 ---
 
-### 1.2: Code Review — Phase 1
+### 1.2: Code Review — Phase 1 (COMPLETED)
 
 **Tasks**:
 
