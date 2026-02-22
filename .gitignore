@@ -13,7 +13,6 @@ htmlcov/
 report.html
 dist/
 
-TODO
 .claude/
 .vscode/
 *.code-workspace
