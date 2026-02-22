@@ -1,13 +1,14 @@
-# TODO:
+# TODO
+
 - Problem: A subtitle section is often beginning with the last word of a sentence, then audio dead space, and the text continues with the beginning of an audio section. Right now we are trying to realign text to audio.
   - Proposed Solution: The audio should be preanalyzed for dead spaces and pre-chunked. Then those chunks are captioned as a block
 - Problem: This tool is general srt, but I use it for specific purposes.
   - Proposed Solution: Refactor the project to better match how it is used. Create a three modes: General, Transcript, Shorts
     - General: The tool makes a best effort to create an srt file from a given audio source based on basic configurations.
     - Transcript: The tool generates a transcript producing large block segments. Starting at TIME_A Speaker said these things until TIME_B. Think long form discussions. Or just a transcript of the audio.
-    - Shorts: The tool generates a tight srt with limited words/chars per segment. 
+    - Shorts: The tool generates a tight srt with limited words/chars per segment.
 - Problem: Shorts at times need word-level time stamps but fastwhisper often needs correction on general sentences.
-  - Proposed Solution: Input a corrected SRT and then use that to match to words in audio 
+  - Proposed Solution: Input a corrected SRT and then use that to match to words in audio
 - Problem: Often I have a script that I can use to help generate the SRT. How can that be used?
 - Problem: It is hard to detect coding regressions.
   - Solution: Create a test harness system to compare results against fixed baselines. Need to create

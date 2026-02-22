@@ -6,15 +6,17 @@ This tool converts audio or video files into readable `.srt` subtitle files with
 punctuation-aware chunking, pacing heuristics, and presets for YouTube, Shorts, and Podcasts.
 
 ## Caveat Emptor
+
 This project was primarily created for my personal use. I will not be responding to pull requests
 or issues unless they directly impact my use cases. Feel free to fork and make whatever changes
-you would like. I was frustrated that a "turn key" local SRT generator was not easily 
+you would like. I was frustrated that a "turn key" local SRT generator was not easily
 available; now there is.
 
 I generated this tool primarily using an AI code assistant. The codebase has test coverage,
 but not every path is exhaustively validated.
 
 ## Features
+
 - Fully local transcription (no remote API calls)
 - Uses `faster-whisper` for high-quality speech recognition
 - Intelligent subtitle chunking:
@@ -33,6 +35,7 @@ but not every path is exhaustively validated.
 - Word-level cue output (optional)
 
 ## Requirements
+
 - **Python**: 3.10 or newer
 - **ffmpeg** (required)
 - **ffprobe** (recommended; usually included with ffmpeg)
@@ -56,9 +59,10 @@ Install from a GitHub download:
 python -m pip install .
 ```
 
-
 ## Installing ffmpeg
+
 ### Windows
+
 ```powershell
 winget install Gyan.FFmpeg
 ```
@@ -388,15 +392,18 @@ srtgen --delete-model small
 ## Troubleshooting
 
 **ffmpeg not found**
+
 ```bash
 ffmpeg -version
 ```
 
 **CUDA errors**
+
 - Ensure NVIDIA drivers are installed
 - Tool will fall back to CPU automatically
 
 ---
 
 ## License
+
 MIT
