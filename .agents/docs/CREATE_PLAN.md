@@ -36,12 +36,10 @@ Each task block must contain:
 After completing a task block, the following must be done:
 
 1. Create/update tests for new features
-2. API keys must be configurable via `.env` file
 3. Run tests: `pytest tests/ -v`
-4. Update `docs/` with new features
-5. Update `example_config.json` and `.env.example` with new config options
+4. Update `USER_GUIDE.md` to reflect the changes to the code base.
 6. Write commit message (see [COMMIT_MESSAGE.md](./COMMIT_MESSAGE.md))
-7. Update Architecture and Key Files sections in CLAUDE.md as needed
+7. Update Architecture and Key Files sections in .agents/docs/ as needed
 
 ## Success Criteria
 
