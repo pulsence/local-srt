@@ -13,6 +13,20 @@ from local_srt.models import WordItem
 Segment = namedtuple("Segment", ["start", "end", "text", "words"])
 
 
+def pytest_addoption(parser: pytest.Parser) -> None:
+    parser.addoption(
+        "--update-baselines",
+        action="store_true",
+        default=False,
+        help="Update integration test baseline SRT files.",
+    )
+
+
+def pytest_configure(config: pytest.Config) -> None:
+    config.addinivalue_line("markers", "integration: integration tests with real audio")
+    config.addinivalue_line("markers", "slow: slow tests")
+
+
 @pytest.fixture
 def mock_word_items() -> Callable[[List[Tuple[str, float, float]]], List[WordItem]]:
     """Build a WordItem list from (text, start, end) tuples."""
@@ -47,3 +61,8 @@ def mock_segments() -> Callable[[List[Dict[str, Any]]], List[Segment]]:
 def mock_silence_intervals() -> List[Tuple[float, float]]:
     """Return a fixed silence interval list for reuse."""
     return [(1.0, 1.4), (3.0, 3.6)]
+
+
+@pytest.fixture
+def update_baselines(request: pytest.FixtureRequest) -> bool:
+    return bool(request.config.getoption("--update-baselines"))

@@ -63,7 +63,7 @@ Document the current tool as-is: installation, all CLI flags, presets, batch pro
 
 Implement before any other code changes. All subsequent changes are only safe once regression coverage exists.
 
-### 2.1: Track A — Deterministic Pipeline Tests
+### 2.1: Track A — Deterministic Pipeline Tests (COMPLETED)
 
 Create the foundational test suite using mocked whisper output. Tests the full post-transcription pipeline (chunking, silence alignment, polishing) with no audio files and no model calls — fully deterministic on every machine.
 
@@ -92,7 +92,7 @@ Create the foundational test suite using mocked whisper output. Tests the full p
 
 ---
 
-### 2.2: Track B — Integration Tests with Real Audio
+### 2.2: Track B — Integration Tests with Real Audio (COMPLETED)
 
 Extend the test suite with end-to-end tests using real voice audio run through actual faster-whisper with `temperature=0` (deterministic). Output is compared against committed baseline SRT files. Track B tests are opt-in (`pytest -m integration`) so they do not slow the default run.
 
