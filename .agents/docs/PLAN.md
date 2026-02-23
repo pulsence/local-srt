@@ -158,7 +158,7 @@ Extend the test suite with end-to-end tests using real voice audio run through a
 
 All changes in this phase are intentionally breaking. No backwards compatibility shims, aliases, or migration helpers are added anywhere.
 
-### 3.1: Config Class Restructuring
+### 3.1: Config Class Restructuring (COMPLETED)
 
 Replace the flat `ResolvedConfig` dataclass with three nested sub-configs (`FormattingConfig`, `TranscriptionConfig`, `SilenceConfig`). Rewrite `apply_overrides` to accept nested dicts. Update `PRESETS` to the new nested structure. All callers are updated in the same change — no transition period.
 
@@ -200,7 +200,7 @@ Replace the flat `ResolvedConfig` dataclass with three nested sub-configs (`Form
 
 ---
 
-### 3.2: Pipeline Mode Separation
+### 3.2: Pipeline Mode Separation (COMPLETED)
 
 Introduce `PipelineMode` as an enum that travels through the pipeline independently of `ResolvedConfig`. Presets control formatting parameters; modes control which pipeline path runs.
 

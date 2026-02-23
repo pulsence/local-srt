@@ -16,7 +16,7 @@ from .events import (
     LogEvent,
     ModelLoadEvent,
 )
-from .models import ResolvedConfig, SubtitleBlock
+from .models import PipelineMode, ResolvedConfig, SubtitleBlock
 from .whisper_wrapper import init_whisper_model_internal
 
 
@@ -110,6 +110,7 @@ def transcribe_file(
     compute_type_used: str,
     language: Optional[str] = None,
     word_level: bool = False,
+    mode: PipelineMode = PipelineMode.GENERAL,
     transcript_path: Optional[Path] = None,
     segments_path: Optional[Path] = None,
     json_bundle_path: Optional[Path] = None,
@@ -134,6 +135,7 @@ def transcribe_file(
             compute_type_used=compute_type_used,
             language=language,
             word_level=word_level,
+            mode=mode,
             dry_run=dry_run,
             keep_wav=keep_wav,
             tmpdir=tmpdir,
@@ -177,6 +179,7 @@ def transcribe_batch(
     compute_type_used: str,
     language: Optional[str] = None,
     word_level: bool = False,
+    mode: PipelineMode = PipelineMode.GENERAL,
     keep_structure: bool = False,
     base_root: Optional[Path] = None,
     overwrite: bool = False,
@@ -240,6 +243,7 @@ def transcribe_batch(
             compute_type_used=compute_type_used,
             language=language,
             word_level=word_level,
+            mode=mode,
             transcript_path=None,
             segments_path=None,
             json_bundle_path=None,

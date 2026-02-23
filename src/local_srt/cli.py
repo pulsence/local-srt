@@ -15,7 +15,7 @@ from typing import List, Optional, Tuple
 
 from .api import load_model, transcribe_file
 from .batch import default_output_for, expand_inputs, preflight_one
-from .config import PRESETS, apply_overrides, load_config_file
+from .config import MODE_PIPELINE_DEFAULTS, PRESETS, apply_overrides, load_config_file
 from .events import (
     ErrorEvent,
     FileCompleteEvent,
@@ -34,7 +34,7 @@ from .model_management import (
     list_available_models,
     list_downloaded_models,
 )
-from .models import ResolvedConfig
+from .models import PipelineMode, ResolvedConfig
 from . import __version__
 from .system import ensure_parent_dir, ffmpeg_ok
 
@@ -126,7 +126,13 @@ def main() -> int:
     ap.add_argument("--language", default=None, help="Optional language code (e.g., en). If omitted, auto-detect.")
     ap.add_argument("--word-level", action="store_true", help="Output word-level subtitle cues (requires word timestamps).")
 
-    ap.add_argument("--mode", default=None, help="Preset modes: shorts | yt | podcast.")
+    ap.add_argument("--preset", default=None, help="Preset formatting: shorts | yt | podcast.")
+    ap.add_argument(
+        "--mode",
+        choices=[mode.value for mode in PipelineMode],
+        default=PipelineMode.GENERAL.value,
+        help="Pipeline mode: general | shorts | transcript.",
+    )
     ap.add_argument("--config", default=None, help="JSON config file. CLI args override config.")
     ap.add_argument("--dry-run", action="store_true", help="Validate inputs and show resolved settings, but do not transcribe.")
 
@@ -213,15 +219,15 @@ def main() -> int:
     quiet = args.quiet
     show_progress = not args.no_progress
 
-    if args.mode:
-        mode_key = args.mode.lower()
-        if mode_key not in PRESETS:
+    if args.preset:
+        preset_key = args.preset.lower()
+        if preset_key not in PRESETS:
             return die(
-                f"Invalid --mode '{args.mode}'. "
-                f"Valid modes: {', '.join(sorted(PRESETS.keys()))}",
+                f"Invalid --preset '{args.preset}'. "
+                f"Valid presets: {', '.join(sorted(PRESETS.keys()))}",
                 code=2,
             )
-        args.mode = mode_key
+        args.preset = preset_key
 
     if not args.inputs:
         return die("No input files provided.", 2)
@@ -256,8 +262,11 @@ def main() -> int:
 
     cfg = apply_overrides(cfg, cfg_file)
 
-    if args.mode:
-        cfg = apply_overrides(cfg, PRESETS[args.mode])
+    if args.preset:
+        cfg = apply_overrides(cfg, PRESETS[args.preset])
+
+    mode = PipelineMode(args.mode)
+    cfg = apply_overrides(cfg, MODE_PIPELINE_DEFAULTS[mode])
 
     if args.max_chars is not None:
         cfg.formatting.max_chars = args.max_chars
@@ -358,6 +367,7 @@ def main() -> int:
                 compute_type_used=compute_type_used,
                 language=args.language,
                 word_level=args.word_level,
+                mode=mode,
                 transcript_path=transcript_out,
                 segments_path=segments_out,
                 json_bundle_path=bundle_out,

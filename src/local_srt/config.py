@@ -11,7 +11,7 @@ import json
 from pathlib import Path
 from typing import Any, Dict, Optional
 
-from .models import ResolvedConfig
+from .models import PipelineMode, ResolvedConfig
 
 
 # ============================================================
@@ -67,6 +67,12 @@ PRESETS: Dict[str, Dict[str, Any]] = {
         "transcription": {},
         "silence": {},
     },
+}
+
+MODE_PIPELINE_DEFAULTS: Dict[PipelineMode, Dict[str, Any]] = {
+    PipelineMode.GENERAL: {"formatting": {}, "transcription": {}, "silence": {}},
+    PipelineMode.SHORTS: {"formatting": {}, "transcription": {}, "silence": {}},
+    PipelineMode.TRANSCRIPT: {"formatting": {}, "transcription": {}, "silence": {}},
 }
 
 

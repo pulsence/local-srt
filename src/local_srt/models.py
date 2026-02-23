@@ -12,6 +12,7 @@ This module contains all data classes used throughout the application:
 from __future__ import annotations
 
 from dataclasses import dataclass, field
+import enum
 from typing import List
 
 
@@ -69,6 +70,12 @@ class ResolvedConfig:
     formatting: FormattingConfig = field(default_factory=FormattingConfig)
     transcription: TranscriptionConfig = field(default_factory=TranscriptionConfig)
     silence: SilenceConfig = field(default_factory=SilenceConfig)
+
+
+class PipelineMode(enum.Enum):
+    GENERAL = "general"
+    SHORTS = "shorts"
+    TRANSCRIPT = "transcript"
 
 
 # ============================================================

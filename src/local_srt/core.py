@@ -13,7 +13,7 @@ from typing import Any, List, Optional, Tuple
 from .audio import detect_silences, to_wav_16k_mono
 from .events import ErrorEvent, EventHandler, LogEvent, ProgressEvent, StageEvent
 from .logging_utils import format_duration
-from .models import ResolvedConfig, SubtitleBlock
+from .models import PipelineMode, ResolvedConfig, SubtitleBlock
 from . import __version__ as TOOL_VERSION
 from .output_writers import segments_to_jsonable, write_ass, write_json_bundle, write_srt, write_txt, write_vtt
 from .subtitle_generation import (
@@ -67,6 +67,7 @@ def transcribe_file_internal(
     compute_type_used: str,
     language: Optional[str],
     word_level: bool,
+    mode: PipelineMode = PipelineMode.GENERAL,
     dry_run: bool,
     keep_wav: bool,
     tmpdir: Optional[Path],
@@ -178,6 +179,11 @@ def transcribe_file_internal(
         )
 
         words = collect_words(seg_list)
+        if mode == PipelineMode.SHORTS:
+            pass
+        elif mode == PipelineMode.TRANSCRIPT:
+            pass
+
         if word_level:
             if not words:
                 raise ValueError("Word-level output requested but no word timestamps are available.")

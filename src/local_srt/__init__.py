@@ -20,6 +20,7 @@ _EXPORTS: Dict[str, Tuple[str, str]] = {
     "TranscriptionConfig": (".models", "TranscriptionConfig"),
     "SilenceConfig": (".models", "SilenceConfig"),
     "ResolvedConfig": (".models", "ResolvedConfig"),
+    "PipelineMode": (".models", "PipelineMode"),
     "SubtitleBlock": (".models", "SubtitleBlock"),
     "WordItem": (".models", "WordItem"),
     "EventEmitter": (".events", "EventEmitter"),
