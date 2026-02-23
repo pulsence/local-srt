@@ -125,6 +125,35 @@ def main() -> int:
     ap.add_argument("--strict-cuda", action="store_true", help="If set, fail instead of falling back when CUDA init fails.")
     ap.add_argument("--language", default=None, help="Optional language code (e.g., en). If omitted, auto-detect.")
     ap.add_argument("--word-level", action="store_true", help="Output word-level subtitle cues.")
+    ap.add_argument(
+        "--no-condition-on-previous-text",
+        dest="condition_on_previous_text",
+        action="store_false",
+        default=None,
+        help="Disable conditioning on previous text during transcription.",
+    )
+    ap.add_argument("--no-speech-threshold", type=float, default=None, help="No-speech threshold for transcription.")
+    ap.add_argument("--log-prob-threshold", type=float, default=None, help="Log probability threshold for transcription.")
+    ap.add_argument(
+        "--compression-ratio-threshold",
+        type=float,
+        default=None,
+        help="Compression ratio threshold for transcription.",
+    )
+    ap.add_argument(
+        "--vad-filter",
+        dest="vad_filter",
+        action="store_true",
+        default=None,
+        help="Enable VAD filtering during transcription.",
+    )
+    ap.add_argument(
+        "--no-vad-filter",
+        dest="vad_filter",
+        action="store_false",
+        default=None,
+        help="Disable VAD filtering during transcription.",
+    )
 
     ap.add_argument("--preset", default=None, help="Preset formatting: shorts | yt | podcast.")
     ap.add_argument(
@@ -295,6 +324,17 @@ def main() -> int:
         cfg.silence.silence_min_dur = float(args.silence_min_dur)
     if args.silence_threshold is not None:
         cfg.silence.silence_threshold_db = float(args.silence_threshold)
+
+    if args.condition_on_previous_text is not None:
+        cfg.transcription.condition_on_previous_text = args.condition_on_previous_text
+    if args.no_speech_threshold is not None:
+        cfg.transcription.no_speech_threshold = float(args.no_speech_threshold)
+    if args.log_prob_threshold is not None:
+        cfg.transcription.log_prob_threshold = float(args.log_prob_threshold)
+    if args.compression_ratio_threshold is not None:
+        cfg.transcription.compression_ratio_threshold = float(args.compression_ratio_threshold)
+    if args.vad_filter is not None:
+        cfg.transcription.vad_filter = args.vad_filter
 
     if not ffmpeg_ok():
         return die("ffmpeg not found on PATH. Install it or add it to PATH.", 2)

@@ -264,7 +264,7 @@ Remove `use_silence_split` and user-facing `word_timestamps` as configurable fla
 
 ---
 
-### 3.4: Transcription Parameter Exposure
+### 3.4: Transcription Parameter Exposure (COMPLETED)
 
 Wire all `TranscriptionConfig` fields into the `model.transcribe()` call and expose them in the CLI. These parameters are the primary diagnostic tools for the missing-text bug.
 

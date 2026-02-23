@@ -120,6 +120,11 @@ def transcribe_file_internal(
             vad_filter=cfg.transcription.vad_filter,
             language=language,
             word_timestamps=True,
+            condition_on_previous_text=cfg.transcription.condition_on_previous_text,
+            no_speech_threshold=cfg.transcription.no_speech_threshold,
+            log_prob_threshold=cfg.transcription.log_prob_threshold,
+            compression_ratio_threshold=cfg.transcription.compression_ratio_threshold,
+            initial_prompt=cfg.transcription.initial_prompt or None,
         )
 
         seg_list: List[Any] = []
