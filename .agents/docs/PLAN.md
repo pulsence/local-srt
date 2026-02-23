@@ -234,7 +234,7 @@ Introduce `PipelineMode` as an enum that travels through the pipeline independen
 
 ---
 
-### 3.3: Always-On Silence Alignment
+### 3.3: Always-On Silence Alignment (COMPLETED)
 
 Remove `use_silence_split` and user-facing `word_timestamps` as configurable flags. Silence detection, word-level timestamps, silence alignment, and silence-aware polishing become unconditional internal behavior in every pipeline mode.
 

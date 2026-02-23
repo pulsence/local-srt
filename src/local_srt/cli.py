@@ -124,7 +124,7 @@ def main() -> int:
     ap.add_argument("--device", choices=["auto", "cpu", "cuda"], default="auto", help="auto/cpu/cuda")
     ap.add_argument("--strict-cuda", action="store_true", help="If set, fail instead of falling back when CUDA init fails.")
     ap.add_argument("--language", default=None, help="Optional language code (e.g., en). If omitted, auto-detect.")
-    ap.add_argument("--word-level", action="store_true", help="Output word-level subtitle cues (requires word timestamps).")
+    ap.add_argument("--word-level", action="store_true", help="Output word-level subtitle cues.")
 
     ap.add_argument("--preset", default=None, help="Preset formatting: shorts | yt | podcast.")
     ap.add_argument(

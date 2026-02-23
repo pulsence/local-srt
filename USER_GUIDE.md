@@ -101,19 +101,13 @@ srtgen input.mp4 --language en
 
 ## Presets
 
-Use `--mode` to apply preset tuning:
+Use `--preset` to apply preset tuning:
 
 ```bash
-srtgen input.mp4 --mode shorts
-srtgen input.mp4 --mode yt
-srtgen input.mp4 --mode podcast
+srtgen input.mp4 --preset shorts
+srtgen input.mp4 --preset yt
+srtgen input.mp4 --preset podcast
 ```
-
-Aliases:
-
-- `short` -> `shorts`
-- `youtube` -> `yt`
-- `pod` -> `podcast`
 
 Preset values (defaults are from the base config):
 
@@ -129,6 +123,18 @@ Preset values (defaults are from the base config):
 | `allow_medium` | True | True | True | True |
 | `min_gap` | 0.08 | 0.08 | 0.08 | 0.08 |
 | `pad` | 0.00 | 0.00 | 0.00 | 0.05 |
+
+These values map to `formatting.*` in the config file.
+
+## Pipeline Modes
+
+Use `--mode` to select the pipeline mode (default: `general`):
+
+```bash
+srtgen input.mp4 --mode general
+srtgen input.mp4 --mode shorts
+srtgen input.mp4 --mode transcript
+```
 
 ## Formatting Options
 
@@ -147,20 +153,18 @@ These flags control chunking and readability. Defaults are shown in parentheses.
 
 ## Silence Settings
 
-Silence-aware splitting and alignment are enabled by default.
+Silence-aware splitting and alignment are always enabled.
 
-- `--no-silence-split` disables silence-based splitting and alignment.
 - `--silence-min-dur` (0.2): Minimum silence duration to consider (seconds).
 - `--silence-threshold` (-35.0): Silence threshold in dB (example: `-35`).
 
 ## Transcription Options
 
-- `--word-timestamps`: Request word timestamps from faster-whisper.
-- `--word-level`: Output one subtitle per word. Implies word timestamps.
+- `--word-level`: Output one subtitle per word.
 
 Notes:
 
-- When silence splitting is enabled (default), the CLI forces word timestamps on so that silence alignment can run. If you want to avoid word timestamps entirely, use `--no-silence-split` and do not pass `--word-timestamps` or `--word-level`.
+- Word timestamps are always collected so that silence alignment can run and JSON outputs can include per-word timing.
 - Voice activity detection (VAD) is controlled by the config key `vad_filter` (default: true). There is no CLI flag for this in 0.2.x.
 
 ## Batch Processing
@@ -199,36 +203,41 @@ Precedence order:
 
 - Defaults
 - `--config` JSON
-- `--mode` preset
+- `--preset` preset
+- `--mode` pipeline defaults
 - CLI flags
 
-Accepted keys (flat JSON object):
+Accepted keys (nested JSON object):
 
-- `max_chars`, `max_lines`, `target_cps`, `min_dur`, `max_dur`
-- `allow_commas`, `allow_medium`, `prefer_punct_splits`
-- `min_gap`, `pad`
-- `vad_filter`, `word_timestamps`
-- `use_silence_split`, `silence_min_dur`, `silence_threshold_db`
+- `formatting`: `max_chars`, `max_lines`, `target_cps`, `min_dur`, `max_dur`
+- `formatting`: `allow_commas`, `allow_medium`, `prefer_punct_splits`
+- `formatting`: `min_gap`, `pad`
+- `transcription`: `vad_filter`
+- `silence`: `silence_min_dur`, `silence_threshold_db`
 
 Example:
 
 ```json
 {
-  "max_chars": 40,
-  "max_lines": 2,
-  "target_cps": 16.0,
-  "min_dur": 0.9,
-  "max_dur": 5.0,
-  "allow_commas": true,
-  "allow_medium": true,
-  "prefer_punct_splits": false,
-  "min_gap": 0.08,
-  "pad": 0.05,
-  "vad_filter": true,
-  "word_timestamps": true,
-  "use_silence_split": true,
-  "silence_min_dur": 0.2,
-  "silence_threshold_db": -35.0
+  "formatting": {
+    "max_chars": 40,
+    "max_lines": 2,
+    "target_cps": 16.0,
+    "min_dur": 0.9,
+    "max_dur": 5.0,
+    "allow_commas": true,
+    "allow_medium": true,
+    "prefer_punct_splits": false,
+    "min_gap": 0.08,
+    "pad": 0.05
+  },
+  "transcription": {
+    "vad_filter": true
+  },
+  "silence": {
+    "silence_min_dur": 0.2,
+    "silence_threshold_db": -35.0
+  }
 }
 ```
 
@@ -258,4 +267,3 @@ Use `--dry-run` to validate inputs and show the resolved config without running 
 - `--no-progress` disables the progress line.
 - `--debug` prints stack traces for errors.
 - `--version` prints the tool version and exits.
-

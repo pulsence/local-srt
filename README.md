@@ -23,7 +23,7 @@ but not every path is exhaustively validated.
   - Punctuation-aware splitting (strong -> medium -> weak)
   - Reading-speed constraints (characters per second)
   - Minimum and maximum subtitle durations
-- Preset modes:
+- Presets:
   - `yt` - standard YouTube captions
   - `shorts` - fast-paced, compact captions
   - `podcast` - slower pacing, longer phrasing
@@ -105,18 +105,26 @@ ASS output:
 srtgen input.mp4 --format ass
 ```
 
-Word-level output (requires word timestamps):
+Word-level output:
 
 ```bash
-srtgen input.mp4 --word-level --word-timestamps
+srtgen input.mp4 --word-level
 ```
 
-Preset modes:
+Presets:
 
 ```bash
-srtgen input.mp4 --mode yt
+srtgen input.mp4 --preset yt
+srtgen input.mp4 --preset shorts
+srtgen input.mp4 --preset podcast
+```
+
+Pipeline modes:
+
+```bash
+srtgen input.mp4 --mode general
 srtgen input.mp4 --mode shorts
-srtgen input.mp4 --mode podcast
+srtgen input.mp4 --mode transcript
 ```
 
 CUDA (with fallback):
@@ -245,7 +253,7 @@ Output control:
 - `-o/--output`: Single-file output path (only valid when one input expands to one file).
 - `--format`: Primary output file format.
 - `--emit-transcript`: Also write a plain-text transcript. If a directory is provided, a file is created per input.
-- `--emit-segments`: Also write segments JSON (word timestamps included if requested).
+- `--emit-segments`: Also write segments JSON (word timestamps included).
 - `--emit-bundle`: Also write a full JSON bundle (segments + subs + config).
 - `--overwrite`: Overwrite outputs if they already exist.
 
@@ -256,7 +264,6 @@ Model + device:
 --device auto|cpu|cuda
 --strict-cuda
 --language CODE
---word-timestamps
 --word-level
 ```
 
@@ -264,18 +271,19 @@ Model + device:
 - `--device`: `auto` picks CUDA when available, otherwise CPU.
 - `--strict-cuda`: Fail instead of falling back to CPU when CUDA init fails.
 - `--language`: Optional language code (e.g., `en`). If omitted, auto-detect.
-- `--word-timestamps`: Request word timestamps (stored in JSON outputs).
-- `--word-level`: Emit word-level subtitle cues (requires word timestamps).
+- `--word-level`: Emit word-level subtitle cues.
 
 Preset + config:
 
 ```bash
---mode shorts|yt|podcast
+--preset shorts|yt|podcast
+--mode general|shorts|transcript
 --config PATH
 --dry-run
 ```
 
-- `--mode`: Apply a preset (`shorts`, `yt`, `podcast`).
+- `--preset`: Apply a preset (`shorts`, `yt`, `podcast`).
+- `--mode`: Select the pipeline mode (`general`, `shorts`, `transcript`).
 - `--config`: JSON config file. CLI args override config values.
 - `--dry-run`: Validate inputs and show resolved settings without transcribing.
 
@@ -292,7 +300,6 @@ Chunking + timing:
 --prefer-punct-splits
 --min-gap FLOAT
 --pad FLOAT
---no-silence-split
 --silence-min-dur FLOAT
 --silence-threshold FLOAT
 ```
@@ -307,7 +314,6 @@ Chunking + timing:
 - `--prefer-punct-splits`: Prefer punctuation splits even when text already fits.
 - `--min-gap`: Minimum gap between consecutive cues (seconds).
 - `--pad`: Pad cues into silence where possible (seconds).
-- `--no-silence-split`: Disable silence-based splitting/alignment.
 - `--silence-min-dur`: Minimum silence duration for splits (seconds).
 - `--silence-threshold`: Silence threshold in dB (e.g., `-35`).
 
