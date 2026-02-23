@@ -154,7 +154,7 @@ Extend the test suite with end-to-end tests using real voice audio run through a
 
 ---
 
-## Phase 3: Architecture Refactoring
+## Phase 3: Architecture Refactoring (COMPLETED)
 
 All changes in this phase are intentionally breaking. No backwards compatibility shims, aliases, or migration helpers are added anywhere.
 
@@ -294,7 +294,7 @@ Wire all `TranscriptionConfig` fields into the `model.transcribe()` call and exp
 
 ---
 
-### 3.5: Code Review — Phase 3
+### 3.5: Code Review — Phase 3 (COMPLETED)
 
 **Tasks**:
 
@@ -307,7 +307,7 @@ Wire all `TranscriptionConfig` fields into the `model.transcribe()` call and exp
 
 ---
 
-### 3.6: Changelog — Phase 3
+### 3.6: Changelog — Phase 3 (COMPLETED)
 
 **Tasks**:
 

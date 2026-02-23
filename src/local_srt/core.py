@@ -199,8 +199,7 @@ def transcribe_file_internal(
             else:
                 subs = chunk_segments_to_subtitles(seg_list, cfg)
 
-        if silences:
-            subs = apply_silence_alignment(subs, silences)
+        subs = apply_silence_alignment(subs, silences)
         subs = hygiene_and_polish(
             subs,
             min_gap=cfg.formatting.min_gap,

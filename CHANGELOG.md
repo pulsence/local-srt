@@ -11,13 +11,16 @@ All notable changes to this project are documented in this file.
 - Added reference transcript comparison with WER-based tolerance for minor transcription drift.
 - Added integration test tooling: `--update-baselines` flag and pytest markers.
 - Audio fixtures live in `tests/fixtures/audio/`; baselines in `tests/fixtures/baselines/`.
+- Added `FormattingConfig`, `TranscriptionConfig`, and `SilenceConfig` as importable dataclasses.
+- Added `PipelineMode` enum (`general`, `shorts`, `transcript`) and `--mode` CLI flag (default: `general`).
+- Added `mode: PipelineMode` parameter to `transcribe_file()` and `transcribe_batch()` API functions.
+- Added diagnostic transcription flags: `--no-condition-on-previous-text`, `--no-speech-threshold`, `--log-prob-threshold`, `--compression-ratio-threshold`, `--vad-filter/--no-vad-filter`.
 
 ### Changed
 
-- **Breaking:** Replaced flat `ResolvedConfig` fields with nested `formatting`, `transcription`, and `silence` sections.
-- **Breaking:** Added `PipelineMode` (`general`, `shorts`, `transcript`) and new `--mode` flag; presets now use `--preset`.
-- **Breaking:** Removed `use_silence_split` and user-facing `--word-timestamps`; silence alignment and word timestamps are always on.
-- Added diagnostic transcription flags: `--no-condition-on-previous-text`, `--no-speech-threshold`, `--log-prob-threshold`, `--compression-ratio-threshold`, `--vad-filter/--no-vad-filter`.
+- **Breaking:** `ResolvedConfig` is now a nested container; all fields moved to `formatting`, `transcription`, or `silence` sub-configs (e.g. `cfg.max_chars` → `cfg.formatting.max_chars`).
+- **Breaking:** `apply_overrides()` now requires nested dict format (`{"formatting": {...}, "transcription": {...}, "silence": {...}}`); flat top-level keys are ignored.
+- **Breaking:** Removed `use_silence_split` flag and user-facing `--word-timestamps`; silence detection, word timestamps, and silence alignment are always active.
 
 ### Fixed
 
