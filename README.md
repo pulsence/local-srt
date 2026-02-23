@@ -265,6 +265,12 @@ Model + device:
 --strict-cuda
 --language CODE
 --word-level
+--no-condition-on-previous-text
+--no-speech-threshold FLOAT
+--log-prob-threshold FLOAT
+--compression-ratio-threshold FLOAT
+--vad-filter
+--no-vad-filter
 ```
 
 - `--model`: faster-whisper model name.
@@ -272,6 +278,11 @@ Model + device:
 - `--strict-cuda`: Fail instead of falling back to CPU when CUDA init fails.
 - `--language`: Optional language code (e.g., `en`). If omitted, auto-detect.
 - `--word-level`: Emit word-level subtitle cues.
+- `--no-condition-on-previous-text`: Disable conditioning on previous text.
+- `--no-speech-threshold`: Override the no-speech threshold.
+- `--log-prob-threshold`: Override the log probability threshold.
+- `--compression-ratio-threshold`: Override the compression ratio threshold.
+- `--vad-filter` / `--no-vad-filter`: Enable or disable VAD filtering.
 
 Preset + config:
 

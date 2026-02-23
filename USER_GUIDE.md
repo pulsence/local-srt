@@ -136,6 +136,11 @@ srtgen input.mp4 --mode shorts
 srtgen input.mp4 --mode transcript
 ```
 
+Notes:
+
+- `general` is the default pipeline.
+- `shorts` and `transcript` currently follow the general pipeline path; their specialized behavior arrives in Phase 4.
+
 ## Formatting Options
 
 These flags control chunking and readability. Defaults are shown in parentheses.
@@ -161,11 +166,16 @@ Silence-aware splitting and alignment are always enabled.
 ## Transcription Options
 
 - `--word-level`: Output one subtitle per word.
+- `--no-condition-on-previous-text`: Disable conditioning on previous text.
+- `--no-speech-threshold`: Override the no-speech threshold.
+- `--log-prob-threshold`: Override the log probability threshold.
+- `--compression-ratio-threshold`: Override the compression ratio threshold.
+- `--vad-filter` / `--no-vad-filter`: Enable or disable VAD filtering.
 
 Notes:
 
 - Word timestamps are always collected so that silence alignment can run and JSON outputs can include per-word timing.
-- Voice activity detection (VAD) is controlled by the config key `vad_filter` (default: true). There is no CLI flag for this in 0.2.x.
+- Voice activity detection (VAD) is controlled by the config key `vad_filter` (default: true) and can be overridden by `--vad-filter`/`--no-vad-filter`.
 
 ## Batch Processing
 

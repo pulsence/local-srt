@@ -14,6 +14,11 @@ All notable changes to this project are documented in this file.
 
 ### Changed
 
+- **Breaking:** Replaced flat `ResolvedConfig` fields with nested `formatting`, `transcription`, and `silence` sections.
+- **Breaking:** Added `PipelineMode` (`general`, `shorts`, `transcript`) and new `--mode` flag; presets now use `--preset`.
+- **Breaking:** Removed `use_silence_split` and user-facing `--word-timestamps`; silence alignment and word timestamps are always on.
+- Added diagnostic transcription flags: `--no-condition-on-previous-text`, `--no-speech-threshold`, `--log-prob-threshold`, `--compression-ratio-threshold`, `--vad-filter/--no-vad-filter`.
+
 ### Fixed
 
 ## 0.2.0 - 2026-02-01
