@@ -131,8 +131,6 @@ def integration_model():
 @pytest.fixture(scope="session")
 def base_cfg() -> ResolvedConfig:
     cfg = ResolvedConfig()
-    # Match default CLI behavior: silence splitting implies word timestamps.
-    cfg.word_timestamps = True
     return cfg
 
 
@@ -148,19 +146,19 @@ def run_pipeline(
 
     silences = detect_silences(
         str(wav_path),
-        min_silence_dur=cfg.silence_min_dur,
-        silence_threshold_db=cfg.silence_threshold_db,
+        min_silence_dur=cfg.silence.silence_min_dur,
+        silence_threshold_db=cfg.silence.silence_threshold_db,
     )
 
     segments_iter, _info = model.transcribe(
         str(wav_path),
-        vad_filter=cfg.vad_filter,
+        vad_filter=cfg.transcription.vad_filter,
         language=None,
-        word_timestamps=cfg.word_timestamps,
+        word_timestamps=True,
         temperature=0.0,
     )
     segments = list(segments_iter)
-    words = collect_words(segments) if cfg.word_timestamps else []
+    words = collect_words(segments)
 
     if words:
         subs = chunk_words_to_subtitles(words, cfg, silences)
@@ -172,13 +170,18 @@ def run_pipeline(
 
     subs = hygiene_and_polish(
         subs,
-        min_gap=cfg.min_gap,
-        pad=cfg.pad,
+        min_gap=cfg.formatting.min_gap,
+        pad=cfg.formatting.pad,
         silence_intervals=silences,
     )
 
     out_path = tmp_path / f"{audio_path.stem}.srt"
-    write_srt(subs, out_path, max_chars=cfg.max_chars, max_lines=cfg.max_lines)
+    write_srt(
+        subs,
+        out_path,
+        max_chars=cfg.formatting.max_chars,
+        max_lines=cfg.formatting.max_lines,
+    )
     return out_path, subs
 
 

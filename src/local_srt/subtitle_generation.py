@@ -169,24 +169,24 @@ def chunk_segments_to_subtitles(
     for s, e, txt in raw:
         parts = split_text_into_blocks(
             txt,
-            cfg.max_chars,
-            cfg.max_lines,
-            allow_commas=cfg.allow_commas,
-            allow_medium=cfg.allow_medium,
-            prefer_punct_splits=cfg.prefer_punct_splits,
+            cfg.formatting.max_chars,
+            cfg.formatting.max_lines,
+            allow_commas=cfg.formatting.allow_commas,
+            allow_medium=cfg.formatting.allow_medium,
+            prefer_punct_splits=cfg.formatting.prefer_punct_splits,
         )
         if len(parts) == 1:
             split_raw.append((s, e, txt))
         else:
             split_raw.extend(distribute_time(s, e, parts))
 
-    split_raw = enforce_timing(split_raw, cfg.min_dur, cfg.max_dur)
+    split_raw = enforce_timing(split_raw, cfg.formatting.min_dur, cfg.formatting.max_dur)
 
     density_fixed: List[Tuple[float, float, str]] = []
     for s, e, txt in split_raw:
         dur = max(0.01, e - s)
         cps = len(txt) / dur
-        if cps > cfg.target_cps and len(txt) > 80:
+        if cps > cfg.formatting.target_cps and len(txt) > 80:
             cut = preferred_split_index(txt)
             if cut == -1:
                 cut = len(txt) // 2
@@ -202,17 +202,17 @@ def chunk_segments_to_subtitles(
         txt = normalize_spaces(txt)
         parts = split_text_into_blocks(
             txt,
-            cfg.max_chars,
-            cfg.max_lines,
-            allow_commas=cfg.allow_commas,
-            allow_medium=cfg.allow_medium,
-            prefer_punct_splits=cfg.prefer_punct_splits,
+            cfg.formatting.max_chars,
+            cfg.formatting.max_lines,
+            allow_commas=cfg.formatting.allow_commas,
+            allow_medium=cfg.formatting.allow_medium,
+            prefer_punct_splits=cfg.formatting.prefer_punct_splits,
         )
         timed_parts = distribute_time(s, e, parts) if len(parts) > 1 else [(s, e, txt)]
         for ps, pe, ptxt in timed_parts:
-            lines = wrap_text_lines(ptxt, cfg.max_chars)
-            if len(lines) > cfg.max_lines:
-                lines = lines[:cfg.max_lines]
+            lines = wrap_text_lines(ptxt, cfg.formatting.max_chars)
+            if len(lines) > cfg.formatting.max_lines:
+                lines = lines[:cfg.formatting.max_lines]
             subs.append(SubtitleBlock(start=float(ps), end=float(pe), lines=lines))
     return subs
 
@@ -242,23 +242,23 @@ def chunk_words_to_subtitles(
         text = words_to_text(run)
         parts = split_text_into_blocks(
             text,
-            cfg.max_chars,
-            cfg.max_lines,
-            allow_commas=cfg.allow_commas,
-            allow_medium=cfg.allow_medium,
-            prefer_punct_splits=cfg.prefer_punct_splits,
+            cfg.formatting.max_chars,
+            cfg.formatting.max_lines,
+            allow_commas=cfg.formatting.allow_commas,
+            allow_medium=cfg.formatting.allow_medium,
+            prefer_punct_splits=cfg.formatting.prefer_punct_splits,
         )
         timed_parts = map_text_blocks_to_word_spans(parts, run)
         timed_parts = enforce_timing(
             timed_parts,
-            cfg.min_dur,
-            cfg.max_dur,
+            cfg.formatting.min_dur,
+            cfg.formatting.max_dur,
             split_long=False,
         )
         for s, e, ptxt in timed_parts:
-            lines = wrap_text_lines(ptxt, cfg.max_chars)
-            if len(lines) > cfg.max_lines:
-                lines = lines[:cfg.max_lines]
+            lines = wrap_text_lines(ptxt, cfg.formatting.max_chars)
+            if len(lines) > cfg.formatting.max_lines:
+                lines = lines[:cfg.formatting.max_lines]
             subs.append(SubtitleBlock(start=float(s), end=float(e), lines=lines))
     return subs
 

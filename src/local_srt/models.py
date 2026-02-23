@@ -2,13 +2,16 @@
 """Data models for Local SRT.
 
 This module contains all data classes used throughout the application:
-- ResolvedConfig: Configuration settings dataclass
+- FormattingConfig: Subtitle formatting defaults
+- TranscriptionConfig: Model transcription tuning defaults
+- SilenceConfig: Silence detection defaults
+- ResolvedConfig: Nested configuration container
 - SubtitleBlock: Represents a subtitle cue with timing and text
 - WordItem: Represents a single transcribed word with timing
 """
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from typing import List
 
 
@@ -17,12 +20,9 @@ from typing import List
 # ============================================================
 
 @dataclass
-class ResolvedConfig:
-    """Resolved configuration for subtitle generation.
+class FormattingConfig:
+    """Subtitle formatting and timing constraints."""
 
-    This dataclass contains all settings that control how subtitles
-    are generated, formatted, and timed.
-    """
     # caption formatting
     max_chars: int = 42
     max_lines: int = 2
@@ -41,14 +41,34 @@ class ResolvedConfig:
     min_gap: float = 0.08
     pad: float = 0.00
 
-    # transcription options
-    vad_filter: bool = True
-    word_timestamps: bool = False
 
-    # silence-aware timing
-    use_silence_split: bool = True
+@dataclass
+class TranscriptionConfig:
+    """Model transcription tuning parameters."""
+
+    vad_filter: bool = True
+    condition_on_previous_text: bool = True
+    no_speech_threshold: float = 0.6
+    log_prob_threshold: float = -1.0
+    compression_ratio_threshold: float = 2.4
+    initial_prompt: str = ""
+
+
+@dataclass
+class SilenceConfig:
+    """Silence detection parameters."""
+
     silence_min_dur: float = 0.2
     silence_threshold_db: float = -35.0
+
+
+@dataclass
+class ResolvedConfig:
+    """Resolved configuration for subtitle generation."""
+
+    formatting: FormattingConfig = field(default_factory=FormattingConfig)
+    transcription: TranscriptionConfig = field(default_factory=TranscriptionConfig)
+    silence: SilenceConfig = field(default_factory=SilenceConfig)
 
 
 # ============================================================

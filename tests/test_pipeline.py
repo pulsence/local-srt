@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from typing import List, Tuple
 
-from local_srt.models import ResolvedConfig, SubtitleBlock
+from local_srt.models import FormattingConfig, ResolvedConfig, SubtitleBlock
 from local_srt.subtitle_generation import (
     apply_silence_alignment,
     chunk_words_to_subtitles,
@@ -22,8 +22,8 @@ def run_pipeline(
     subs = apply_silence_alignment(subs, silences)
     subs = hygiene_and_polish(
         subs,
-        min_gap=cfg.min_gap,
-        pad=cfg.pad,
+        min_gap=cfg.formatting.min_gap,
+        pad=cfg.formatting.pad,
         silence_intervals=silences,
     )
     return subs
@@ -83,7 +83,7 @@ def test_pipeline_silence_split(mock_word_items):
 
 
 def test_pipeline_max_chars_wrap(mock_word_items):
-    cfg = ResolvedConfig(max_chars=10, max_lines=3)
+    cfg = ResolvedConfig(formatting=FormattingConfig(max_chars=10, max_lines=3))
     words = mock_word_items(
         [
             ("one", 0.0, 0.4),

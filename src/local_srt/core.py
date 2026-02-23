@@ -11,7 +11,7 @@ from pathlib import Path
 from typing import Any, List, Optional, Tuple
 
 from .audio import detect_silences, to_wav_16k_mono
-from .events import ErrorEvent, EventHandler, LogEvent, ProgressEvent, StageEvent, WarnEvent
+from .events import ErrorEvent, EventHandler, LogEvent, ProgressEvent, StageEvent
 from .logging_utils import format_duration
 from .models import ResolvedConfig, SubtitleBlock
 from . import __version__ as TOOL_VERSION
@@ -116,9 +116,9 @@ def transcribe_file_internal(
         t0 = time.time()
         segments_iter, _info = model.transcribe(
             tmp_wav,
-            vad_filter=cfg.vad_filter,
+            vad_filter=cfg.transcription.vad_filter,
             language=language,
-            word_timestamps=cfg.word_timestamps,
+            word_timestamps=True,
         )
 
         seg_list: List[Any] = []
@@ -171,39 +171,30 @@ def transcribe_file_internal(
 
         _emit(event_handler, StageEvent(stage="Chunking + formatting", stage_number=3, total_stages=4))
         t1 = time.time()
-        silences: List[Tuple[float, float]] = []
-        if cfg.use_silence_split:
-            silences = detect_silences(
-                tmp_wav,
-                min_silence_dur=cfg.silence_min_dur,
-                silence_threshold_db=cfg.silence_threshold_db,
-            )
+        silences: List[Tuple[float, float]] = detect_silences(
+            tmp_wav,
+            min_silence_dur=cfg.silence.silence_min_dur,
+            silence_threshold_db=cfg.silence.silence_threshold_db,
+        )
 
-        words = collect_words(seg_list) if cfg.word_timestamps else []
+        words = collect_words(seg_list)
         if word_level:
             if not words:
                 raise ValueError("Word-level output requested but no word timestamps are available.")
             subs = words_to_subtitles(words)
         else:
-            if cfg.use_silence_split and words:
+            if words:
                 subs = chunk_words_to_subtitles(words, cfg, silences)
             else:
-                if cfg.use_silence_split and not words:
-                    _emit(
-                        event_handler,
-                        WarnEvent(
-                            message="Silence splitting requested but no word timestamps returned; falling back."
-                        ),
-                    )
                 subs = chunk_segments_to_subtitles(seg_list, cfg)
 
-        if cfg.use_silence_split and silences:
+        if silences:
             subs = apply_silence_alignment(subs, silences)
         subs = hygiene_and_polish(
             subs,
-            min_gap=cfg.min_gap,
-            pad=cfg.pad,
-            silence_intervals=silences if cfg.use_silence_split else None,
+            min_gap=cfg.formatting.min_gap,
+            pad=cfg.formatting.pad,
+            silence_intervals=silences,
         )
         _emit(
             event_handler,
@@ -217,11 +208,11 @@ def transcribe_file_internal(
 
         _emit(event_handler, StageEvent(stage="Writing outputs", stage_number=4, total_stages=4))
         if fmt == "srt":
-            write_srt(subs, output_path, max_chars=cfg.max_chars, max_lines=cfg.max_lines)
+            write_srt(subs, output_path, max_chars=cfg.formatting.max_chars, max_lines=cfg.formatting.max_lines)
         elif fmt == "vtt":
-            write_vtt(subs, output_path, max_chars=cfg.max_chars, max_lines=cfg.max_lines)
+            write_vtt(subs, output_path, max_chars=cfg.formatting.max_chars, max_lines=cfg.formatting.max_lines)
         elif fmt == "ass":
-            write_ass(subs, output_path, max_chars=cfg.max_chars, max_lines=cfg.max_lines)
+            write_ass(subs, output_path, max_chars=cfg.formatting.max_chars, max_lines=cfg.formatting.max_lines)
         elif fmt == "txt":
             write_txt(subs, output_path)
         elif fmt == "json":
@@ -244,11 +235,12 @@ def transcribe_file_internal(
         if segments_path:
             ensure_parent_dir(segments_path)
             tmp = segments_path.with_suffix(segments_path.suffix + ".tmp")
+            include_words = any(getattr(seg, "words", None) for seg in seg_list)
             tmp.write_text(
                 json.dumps(
                     {
                         "input_file": str(input_path),
-                        "segments": segments_to_jsonable(seg_list, include_words=cfg.word_timestamps),
+                        "segments": segments_to_jsonable(seg_list, include_words=include_words),
                     },
                     ensure_ascii=False,
                     indent=2,

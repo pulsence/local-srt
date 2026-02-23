@@ -317,6 +317,7 @@ Wire all `TranscriptionConfig` fields into the `model.transcribe()` call and exp
   - Add `--mode` flag documentation (General as default, Shorts and Transcript as coming in Phase 4)
   - Add the new diagnostic flags: `--no-condition-on-previous-text`, `--no-speech-threshold`, `--log-prob-threshold`, `--compression-ratio-threshold`
   - Remove `--word-timestamps` and `--use-silence-split` from the guide
+- Update `README.md` with the latest usage information.
 
 ---
 

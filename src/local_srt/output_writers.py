@@ -262,7 +262,10 @@ def write_json_bundle(
         "device_used": device_used,
         "compute_type_used": compute_type_used,
         "config": dataclasses.asdict(cfg),
-        "segments": segments_to_jsonable(segments, include_words=cfg.word_timestamps),
+        "segments": segments_to_jsonable(
+            segments,
+            include_words=any(getattr(seg, "words", None) for seg in segments),
+        ),
         "subtitles": [
             {"start": sb.start, "end": sb.end, "text": normalize_spaces(" ".join(sb.lines))}
             for sb in subs

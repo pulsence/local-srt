@@ -15,7 +15,7 @@ from typing import List, Optional, Tuple
 
 from .api import load_model, transcribe_file
 from .batch import default_output_for, expand_inputs, preflight_one
-from .config import MODE_ALIASES, PRESETS, apply_overrides, load_config_file
+from .config import PRESETS, apply_overrides, load_config_file
 from .events import (
     ErrorEvent,
     FileCompleteEvent,
@@ -124,14 +124,9 @@ def main() -> int:
     ap.add_argument("--device", choices=["auto", "cpu", "cuda"], default="auto", help="auto/cpu/cuda")
     ap.add_argument("--strict-cuda", action="store_true", help="If set, fail instead of falling back when CUDA init fails.")
     ap.add_argument("--language", default=None, help="Optional language code (e.g., en). If omitted, auto-detect.")
-    ap.add_argument(
-        "--word-timestamps",
-        action="store_true",
-        help="Request word timestamps (preserved in JSON outputs).",
-    )
     ap.add_argument("--word-level", action="store_true", help="Output word-level subtitle cues (requires word timestamps).")
 
-    ap.add_argument("--mode", default=None, help="Preset modes: shorts | yt | podcast (aliases: short, youtube, pod).")
+    ap.add_argument("--mode", default=None, help="Preset modes: shorts | yt | podcast.")
     ap.add_argument("--config", default=None, help="JSON config file. CLI args override config.")
     ap.add_argument("--dry-run", action="store_true", help="Validate inputs and show resolved settings, but do not transcribe.")
 
@@ -147,7 +142,6 @@ def main() -> int:
 
     ap.add_argument("--min-gap", type=float, default=None, help="Minimum gap between consecutive subtitle cues (seconds).")
     ap.add_argument("--pad", type=float, default=None, help="Pad cues into silence where possible (seconds).")
-    ap.add_argument("--no-silence-split", action="store_true", help="Disable silence-based splitting/alignment.")
     ap.add_argument("--silence-min-dur", type=float, default=None, help="Minimum silence duration for splits (seconds).")
     ap.add_argument("--silence-threshold", type=float, default=None, help="Silence threshold in dB (e.g., -35).")
 
@@ -221,13 +215,13 @@ def main() -> int:
 
     if args.mode:
         mode_key = args.mode.lower()
-        if mode_key not in MODE_ALIASES:
+        if mode_key not in PRESETS:
             return die(
                 f"Invalid --mode '{args.mode}'. "
-                f"Valid modes: shorts, yt, podcast",
+                f"Valid modes: {', '.join(sorted(PRESETS.keys()))}",
                 code=2,
             )
-        args.mode = MODE_ALIASES[mode_key]
+        args.mode = mode_key
 
     if not args.inputs:
         return die("No input files provided.", 2)
@@ -266,39 +260,32 @@ def main() -> int:
         cfg = apply_overrides(cfg, PRESETS[args.mode])
 
     if args.max_chars is not None:
-        cfg.max_chars = args.max_chars
+        cfg.formatting.max_chars = args.max_chars
     if args.max_lines is not None:
-        cfg.max_lines = args.max_lines
+        cfg.formatting.max_lines = args.max_lines
     if args.target_cps is not None:
-        cfg.target_cps = args.target_cps
+        cfg.formatting.target_cps = args.target_cps
     if args.min_dur is not None:
-        cfg.min_dur = args.min_dur
+        cfg.formatting.min_dur = args.min_dur
     if args.max_dur is not None:
-        cfg.max_dur = args.max_dur
+        cfg.formatting.max_dur = args.max_dur
 
     if args.no_comma_split:
-        cfg.allow_commas = False
+        cfg.formatting.allow_commas = False
     if args.no_medium_split:
-        cfg.allow_medium = False
+        cfg.formatting.allow_medium = False
     if args.prefer_punct_splits:
-        cfg.prefer_punct_splits = True
+        cfg.formatting.prefer_punct_splits = True
 
     if args.min_gap is not None:
-        cfg.min_gap = float(args.min_gap)
+        cfg.formatting.min_gap = float(args.min_gap)
     if args.pad is not None:
-        cfg.pad = float(args.pad)
+        cfg.formatting.pad = float(args.pad)
 
-    if args.no_silence_split:
-        cfg.use_silence_split = False
     if args.silence_min_dur is not None:
-        cfg.silence_min_dur = float(args.silence_min_dur)
+        cfg.silence.silence_min_dur = float(args.silence_min_dur)
     if args.silence_threshold is not None:
-        cfg.silence_threshold_db = float(args.silence_threshold)
-
-    if args.word_timestamps:
-        cfg.word_timestamps = True
-    if args.word_level or cfg.use_silence_split:
-        cfg.word_timestamps = True
+        cfg.silence.silence_threshold_db = float(args.silence_threshold)
 
     if not ffmpeg_ok():
         return die("ffmpeg not found on PATH. Install it or add it to PATH.", 2)

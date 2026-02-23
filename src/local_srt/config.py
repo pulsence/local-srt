@@ -20,50 +20,53 @@ from .models import ResolvedConfig
 
 PRESETS: Dict[str, Dict[str, Any]] = {
     "shorts": {
-        "max_chars": 18,
-        "max_lines": 1,
-        "target_cps": 18.0,
-        "min_dur": 0.7,
-        "max_dur": 3.0,
-        "prefer_punct_splits": False,
-        "allow_commas": True,
-        "allow_medium": True,
-        "min_gap": 0.08,
-        "pad": 0.00,
+        "formatting": {
+            "max_chars": 18,
+            "max_lines": 1,
+            "target_cps": 18.0,
+            "min_dur": 0.7,
+            "max_dur": 3.0,
+            "prefer_punct_splits": False,
+            "allow_commas": True,
+            "allow_medium": True,
+            "min_gap": 0.08,
+            "pad": 0.00,
+        },
+        "transcription": {},
+        "silence": {},
     },
     "yt": {
-        "max_chars": 42,
-        "max_lines": 2,
-        "target_cps": 17.0,
-        "min_dur": 1.0,
-        "max_dur": 6.0,
-        "prefer_punct_splits": False,
-        "allow_commas": True,
-        "allow_medium": True,
-        "min_gap": 0.08,
-        "pad": 0.00,
+        "formatting": {
+            "max_chars": 42,
+            "max_lines": 2,
+            "target_cps": 17.0,
+            "min_dur": 1.0,
+            "max_dur": 6.0,
+            "prefer_punct_splits": False,
+            "allow_commas": True,
+            "allow_medium": True,
+            "min_gap": 0.08,
+            "pad": 0.00,
+        },
+        "transcription": {},
+        "silence": {},
     },
     "podcast": {
-        "max_chars": 40,
-        "max_lines": 2,
-        "target_cps": 16.0,
-        "min_dur": 0.9,
-        "max_dur": 5.0,
-        "prefer_punct_splits": True,
-        "allow_commas": True,
-        "allow_medium": True,
-        "min_gap": 0.08,
-        "pad": 0.05,
+        "formatting": {
+            "max_chars": 40,
+            "max_lines": 2,
+            "target_cps": 16.0,
+            "min_dur": 0.9,
+            "max_dur": 5.0,
+            "prefer_punct_splits": True,
+            "allow_commas": True,
+            "allow_medium": True,
+            "min_gap": 0.08,
+            "pad": 0.05,
+        },
+        "transcription": {},
+        "silence": {},
     },
-}
-
-MODE_ALIASES = {
-    "short": "shorts",
-    "shorts": "shorts",
-    "yt": "yt",
-    "youtube": "yt",
-    "pod": "podcast",
-    "podcast": "podcast",
 }
 
 
@@ -95,6 +98,14 @@ def load_config_file(path: Optional[str]) -> Dict[str, Any]:
     return data
 
 
+def _apply_section_overrides(instance: Any, overrides: Dict[str, Any]) -> Any:
+    fields = {f.name for f in dataclasses.fields(instance)}
+    updates = {k: v for k, v in overrides.items() if k in fields}
+    if not updates:
+        return instance
+    return dataclasses.replace(instance, **updates)
+
+
 def apply_overrides(base: ResolvedConfig, overrides: Dict[str, Any]) -> ResolvedConfig:
     """Apply configuration overrides to a base configuration.
 
@@ -105,8 +116,18 @@ def apply_overrides(base: ResolvedConfig, overrides: Dict[str, Any]) -> Resolved
     Returns:
         New ResolvedConfig instance with overrides applied
     """
-    d = dataclasses.asdict(base)
+    cfg = ResolvedConfig(
+        formatting=dataclasses.replace(base.formatting),
+        transcription=dataclasses.replace(base.transcription),
+        silence=dataclasses.replace(base.silence),
+    )
     for k, v in overrides.items():
-        if k in d:
-            d[k] = v
-    return ResolvedConfig(**d)
+        if not isinstance(v, dict):
+            continue
+        if k == "formatting":
+            cfg = dataclasses.replace(cfg, formatting=_apply_section_overrides(cfg.formatting, v))
+        elif k == "transcription":
+            cfg = dataclasses.replace(cfg, transcription=_apply_section_overrides(cfg.transcription, v))
+        elif k == "silence":
+            cfg = dataclasses.replace(cfg, silence=_apply_section_overrides(cfg.silence, v))
+    return cfg

@@ -129,15 +129,17 @@ class TestFunctionToTest:
 ### Using Fixtures
 
 ```python
+from local_srt.models import FormattingConfig, ResolvedConfig
+
 @pytest.fixture
 def sample_config():
     """Provide a sample configuration for tests."""
-    return ResolvedConfig(max_chars=50, max_lines=2)
+    return ResolvedConfig(formatting=FormattingConfig(max_chars=50, max_lines=2))
 
 
 def test_with_fixture(sample_config):
     """Test using the fixture."""
-    assert sample_config.max_chars == 50
+    assert sample_config.formatting.max_chars == 50
 ```
 
 ### Mocking External Dependencies

@@ -16,6 +16,9 @@ _EXPORTS: Dict[str, Tuple[str, str]] = {
     "load_model": (".api", "load_model"),
     "TranscriptionResult": (".api", "TranscriptionResult"),
     "BatchResult": (".api", "BatchResult"),
+    "FormattingConfig": (".models", "FormattingConfig"),
+    "TranscriptionConfig": (".models", "TranscriptionConfig"),
+    "SilenceConfig": (".models", "SilenceConfig"),
     "ResolvedConfig": (".models", "ResolvedConfig"),
     "SubtitleBlock": (".models", "SubtitleBlock"),
     "WordItem": (".models", "WordItem"),
@@ -31,7 +34,6 @@ _EXPORTS: Dict[str, Tuple[str, str]] = {
     "ModelLoadEvent": (".events", "ModelLoadEvent"),
     "EventLevel": (".events", "EventLevel"),
     "PRESETS": (".config", "PRESETS"),
-    "MODE_ALIASES": (".config", "MODE_ALIASES"),
     "load_config_file": (".config", "load_config_file"),
     "apply_overrides": (".config", "apply_overrides"),
 }

@@ -1,7 +1,6 @@
 """Tests for the models module."""
-import pytest
 from local_srt import __version__
-from local_srt.models import ResolvedConfig, SubtitleBlock, WordItem
+from local_srt.models import FormattingConfig, ResolvedConfig, SilenceConfig, SubtitleBlock, TranscriptionConfig, WordItem
 
 
 class TestToolVersion:
@@ -33,47 +32,56 @@ class TestResolvedConfig:
         cfg = ResolvedConfig()
 
         # Caption formatting
-        assert cfg.max_chars == 42
-        assert cfg.max_lines == 2
+        assert cfg.formatting.max_chars == 42
+        assert cfg.formatting.max_lines == 2
 
         # Readability / timing heuristics
-        assert cfg.target_cps == 17.0
-        assert cfg.min_dur == 1.0
-        assert cfg.max_dur == 6.0
+        assert cfg.formatting.target_cps == 17.0
+        assert cfg.formatting.min_dur == 1.0
+        assert cfg.formatting.max_dur == 6.0
 
         # Punctuation splitting
-        assert cfg.allow_commas is True
-        assert cfg.allow_medium is True
-        assert cfg.prefer_punct_splits is False
+        assert cfg.formatting.allow_commas is True
+        assert cfg.formatting.allow_medium is True
+        assert cfg.formatting.prefer_punct_splits is False
 
         # Timing polish
-        assert cfg.min_gap == 0.08
-        assert cfg.pad == 0.00
+        assert cfg.formatting.min_gap == 0.08
+        assert cfg.formatting.pad == 0.00
 
         # Transcription options
-        assert cfg.vad_filter is True
-        assert cfg.word_timestamps is False
+        assert cfg.transcription.vad_filter is True
+        assert cfg.transcription.condition_on_previous_text is True
+        assert cfg.transcription.no_speech_threshold == 0.6
+        assert cfg.transcription.log_prob_threshold == -1.0
+        assert cfg.transcription.compression_ratio_threshold == 2.4
+        assert cfg.transcription.initial_prompt == ""
 
         # Silence-aware timing
-        assert cfg.use_silence_split is True
-        assert cfg.silence_min_dur == 0.2
-        assert cfg.silence_threshold_db == -35.0
+        assert cfg.silence.silence_min_dur == 0.2
+        assert cfg.silence.silence_threshold_db == -35.0
 
     def test_custom_config(self):
         """Test creating config with custom values."""
         cfg = ResolvedConfig(
-            max_chars=50,
-            max_lines=3,
-            target_cps=20.0,
-            min_dur=0.5,
-            max_dur=10.0,
+            formatting=FormattingConfig(
+                max_chars=50,
+                max_lines=3,
+                target_cps=20.0,
+                min_dur=0.5,
+                max_dur=10.0,
+            ),
+            transcription=TranscriptionConfig(vad_filter=False),
+            silence=SilenceConfig(silence_min_dur=0.3),
         )
 
-        assert cfg.max_chars == 50
-        assert cfg.max_lines == 3
-        assert cfg.target_cps == 20.0
-        assert cfg.min_dur == 0.5
-        assert cfg.max_dur == 10.0
+        assert cfg.formatting.max_chars == 50
+        assert cfg.formatting.max_lines == 3
+        assert cfg.formatting.target_cps == 20.0
+        assert cfg.formatting.min_dur == 0.5
+        assert cfg.formatting.max_dur == 10.0
+        assert cfg.transcription.vad_filter is False
+        assert cfg.silence.silence_min_dur == 0.3
 
     def test_config_is_dataclass(self):
         """Test that ResolvedConfig is a proper dataclass."""
