@@ -119,6 +119,7 @@ def main() -> int:
     ap.add_argument("--emit-transcript", default=None, help="Also write a transcript TXT to this path (or outdir-based if a directory).")
     ap.add_argument("--emit-segments", default=None, help="Also write segments JSON to this path (or outdir-based if a directory).")
     ap.add_argument("--emit-bundle", default=None, help="Also write a full JSON bundle (segments+subs+config) to this path (or outdir-based if a directory).")
+    ap.add_argument("--word-srt", default=None, help="Word-level SRT output path (shorts mode only).")
 
     ap.add_argument("--model", default="medium", help="tiny/base/small/medium/large-v3")
     ap.add_argument("--device", choices=["auto", "cpu", "cuda"], default="auto", help="auto/cpu/cuda")
@@ -258,6 +259,9 @@ def main() -> int:
             )
         args.preset = preset_key
 
+    if args.word_srt and PipelineMode(args.mode) != PipelineMode.SHORTS:
+        return die("--word-srt is only valid when --mode shorts.", 2)
+
     if not args.inputs:
         return die("No input files provided.", 2)
     files = expand_inputs(args.inputs, args.glob)
@@ -391,6 +395,21 @@ def main() -> int:
         segments_out = side_path(args.emit_segments, ".segments.json")
         bundle_out = side_path(args.emit_bundle, ".bundle.json") if args.emit_bundle else None
 
+        word_out: Optional[Path] = None
+        if mode == PipelineMode.SHORTS:
+            if args.word_srt:
+                word_out = side_path(args.word_srt, "_words.srt")
+            else:
+                word_out = primary_out.with_name(f"{primary_out.stem}_words.srt")
+            if word_out:
+                ok_word, reason = preflight_one(f, word_out, args.overwrite)
+                if not ok_word:
+                    failures.append((f, reason))
+                    if not args.continue_on_error:
+                        return die(reason, 2)
+                    print(f"WARNING: {f}: {reason}", file=sys.stderr)
+                    continue
+
         emit_event(
             handler,
             FileStartEvent(input_path=str(f), output_path=str(primary_out)),
@@ -408,6 +427,7 @@ def main() -> int:
                 language=args.language,
                 word_level=args.word_level,
                 mode=mode,
+                word_output_path=word_out,
                 transcript_path=transcript_out,
                 segments_path=segments_out,
                 json_bundle_path=bundle_out,

@@ -57,6 +57,7 @@ def transcribe_file_internal(
     *,
     input_path: Path,
     output_path: Path,
+    word_output_path: Optional[Path],
     fmt: str,
     transcript_path: Optional[Path],
     segments_path: Optional[Path],
@@ -79,6 +80,8 @@ def transcribe_file_internal(
         raise RuntimeError("ffmpeg not found on PATH. Install it or add it to PATH.")
 
     ensure_parent_dir(output_path)
+    if word_output_path:
+        ensure_parent_dir(word_output_path)
     if transcript_path:
         ensure_parent_dir(transcript_path)
     if segments_path:
@@ -184,12 +187,21 @@ def transcribe_file_internal(
         )
 
         words = collect_words(seg_list)
-        if mode == PipelineMode.SHORTS:
-            pass
-        elif mode == PipelineMode.TRANSCRIPT:
-            pass
+        word_subs: Optional[List[SubtitleBlock]] = None
 
-        if word_level:
+        if mode == PipelineMode.SHORTS:
+            if not words:
+                raise ValueError("Shorts mode requires word timestamps but none were returned.")
+            if not word_output_path:
+                raise ValueError("Shorts mode requires a word_output_path.")
+            subs = chunk_words_to_subtitles(words, cfg, silences)
+            word_subs = words_to_subtitles(words)
+        elif mode == PipelineMode.TRANSCRIPT:
+            if words:
+                subs = chunk_words_to_subtitles(words, cfg, silences)
+            else:
+                subs = chunk_segments_to_subtitles(seg_list, cfg)
+        elif word_level:
             if not words:
                 raise ValueError("Word-level output requested but no word timestamps are available.")
             subs = words_to_subtitles(words)
@@ -258,6 +270,14 @@ def transcribe_file_internal(
                 encoding="utf-8",
             )
             os.replace(tmp, segments_path)
+
+        if word_subs and word_output_path:
+            write_srt(
+                word_subs,
+                word_output_path,
+                max_chars=cfg.formatting.max_chars,
+                max_lines=cfg.formatting.max_lines,
+            )
 
         if json_bundle_path:
             write_json_bundle(

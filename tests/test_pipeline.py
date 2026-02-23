@@ -9,6 +9,7 @@ from local_srt.subtitle_generation import (
     apply_silence_alignment,
     chunk_words_to_subtitles,
     hygiene_and_polish,
+    words_to_subtitles,
 )
 
 
@@ -102,3 +103,23 @@ def test_pipeline_max_chars_wrap(mock_word_items):
     subs = run_pipeline(words=words, cfg=cfg, silences=silences)
     expected = [SubtitleBlock(0.0, 2.5, ["one two three four five"])]
     assert_blocks_close(subs, expected)
+
+
+def test_shorts_pipeline_outputs_two_lists(mock_word_items):
+    cfg = ResolvedConfig()
+    words = mock_word_items(
+        [
+            ("Hello", 0.0, 0.4),
+            ("world", 0.4, 0.9),
+        ]
+    )
+    silences: List[Tuple[float, float]] = []
+
+    sentence_subs = chunk_words_to_subtitles(words, cfg, silences)
+    word_subs = words_to_subtitles(words)
+
+    assert sentence_subs == [SubtitleBlock(0.0, 0.9, ["Hello world"])]
+    assert word_subs == [
+        SubtitleBlock(0.0, 0.4, ["Hello"]),
+        SubtitleBlock(0.4, 0.9, ["world"]),
+    ]
