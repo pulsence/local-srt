@@ -128,6 +128,7 @@ def main() -> int:
     ap.add_argument("--language", default=None, help="Optional language code (e.g., en). If omitted, auto-detect.")
     ap.add_argument("--prompt", default=None, help="Optional initial prompt text for transcription.")
     ap.add_argument("--prompt-file", default=None, help="Path to a prompt file (.docx or .txt).")
+    ap.add_argument("--correction-srt", default=None, help="Corrected sentence-level SRT for word-level alignment.")
     ap.add_argument("--word-level", action="store_true", help="Output word-level subtitle cues.")
     ap.add_argument(
         "--no-condition-on-previous-text",
@@ -454,6 +455,7 @@ def main() -> int:
                 transcript_path=transcript_out,
                 segments_path=segments_out,
                 json_bundle_path=bundle_out,
+                correction_srt=Path(args.correction_srt) if args.correction_srt else None,
                 dry_run=args.dry_run,
                 keep_wav=args.keep_wav,
                 tmpdir=Path(args.tmpdir) if args.tmpdir else None,

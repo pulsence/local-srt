@@ -25,6 +25,7 @@ from .subtitle_generation import (
     hygiene_and_polish,
     words_to_subtitles,
 )
+from .alignment import align_corrected_srt
 from .system import ensure_parent_dir, ffmpeg_ok, probe_duration_seconds
 
 
@@ -63,6 +64,7 @@ def transcribe_file_internal(
     transcript_path: Optional[Path],
     segments_path: Optional[Path],
     json_bundle_path: Optional[Path],
+    correction_srt: Optional[Path],
     cfg: ResolvedConfig,
     model: Any,
     device_used: str,
@@ -188,6 +190,8 @@ def transcribe_file_internal(
         )
 
         words = collect_words(seg_list)
+        if correction_srt and words:
+            words = align_corrected_srt(correction_srt, words)
         word_subs: Optional[List[SubtitleBlock]] = None
 
         if mode == PipelineMode.SHORTS:
