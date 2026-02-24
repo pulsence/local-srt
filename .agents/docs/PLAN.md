@@ -321,9 +321,9 @@ Wire all `TranscriptionConfig` fields into the `model.transcribe()` call and exp
 
 ---
 
-## Phase 4: Output Modes
+## Phase 4: Output Modes (COMPLETED)
 
-### 4.1: Shorts Mode
+### 4.1: Shorts Mode (COMPLETED)
 
 Implement `PipelineMode.SHORTS` dispatch. Shorts mode produces two output files: a sentence-level SRT for editing and a word-level SRT for dynamic animation. Both outputs are derived from the same whisper word-timestamp run.
 
@@ -356,7 +356,7 @@ Implement `PipelineMode.SHORTS` dispatch. Shorts mode produces two output files:
 
 ---
 
-### 4.2: Transcript Mode
+### 4.2: Transcript Mode (COMPLETED)
 
 Implement `PipelineMode.TRANSCRIPT` with a new chunking strategy that merges segments into large, paragraph-like blocks.
 
@@ -394,7 +394,7 @@ Implement `PipelineMode.TRANSCRIPT` with a new chunking strategy that merges seg
 
 ---
 
-### 4.3: Code Review — Phase 4
+### 4.3: Code Review — Phase 4 (COMPLETED)
 
 **Tasks**:
 
@@ -407,7 +407,7 @@ Implement `PipelineMode.TRANSCRIPT` with a new chunking strategy that merges seg
 
 ---
 
-### 4.4: Changelog — Phase 4
+### 4.4: Changelog — Phase 4 (COMPLETED)
 
 **Tasks**:
 

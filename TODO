@@ -1,1 +1,5 @@
 # TODO: Future 0.4.0
+## Testing:
+- Improve test benchmarking harness to be configurable to point at folder with .mp3 and .srt and a set of
+  setting configurations and then run these configurations on the inputs and generate results based upon
+  outputs compared to provided srt.

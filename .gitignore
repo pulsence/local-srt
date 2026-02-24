@@ -13,3 +13,4 @@ dist/
 .claude/
 .vscode/
 *.code-workspace
+test_data/

@@ -106,3 +106,4 @@ No API keys required — fully local. System dependencies:
 - **Transcription result:** `TranscriptionResult(success, input_path, output_path, subtitles, segments, device_used, compute_type_used, error)`.
 - **Batch result:** `BatchResult(total, successful, failed, results)`.
 - **Config model:** All config in `ResolvedConfig` dataclass — flat field layout, no nested sections.
+- **Manual Verification Testing:** There are a set of .mp3 files with corrected .srt files in test_data/. Use these files to run manual verification testing.
