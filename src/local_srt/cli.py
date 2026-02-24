@@ -35,6 +35,7 @@ from .model_management import (
     list_downloaded_models,
 )
 from .models import PipelineMode, ResolvedConfig
+from .diarization import is_diarization_available
 from .script_reader import read_docx
 from . import __version__
 from .system import ensure_parent_dir, ffmpeg_ok
@@ -130,6 +131,8 @@ def main() -> int:
     ap.add_argument("--prompt-file", default=None, help="Path to a prompt file (.docx or .txt).")
     ap.add_argument("--correction-srt", default=None, help="Corrected sentence-level SRT for word-level alignment.")
     ap.add_argument("--script", default=None, help="Script file (.docx or .txt) for sentence-level substitution.")
+    ap.add_argument("--diarize", action="store_true", help="Enable speaker diarization (Transcript mode).")
+    ap.add_argument("--hf-token", default=None, help="HuggingFace token for diarization (or set HF_TOKEN env var).")
     ap.add_argument("--word-level", action="store_true", help="Output word-level subtitle cues.")
     ap.add_argument(
         "--no-condition-on-previous-text",
@@ -371,6 +374,12 @@ def main() -> int:
     if not ffmpeg_ok():
         return die("ffmpeg not found on PATH. Install it or add it to PATH.", 2)
 
+    if args.diarize and not is_diarization_available():
+        return die(
+            "Speaker diarization requires pyannote.audio. Install with: pip install local-srt[diarize].",
+            2,
+        )
+
     if args.output is not None and len(files) != 1:
         return die("--output may only be used when exactly one input file is provided (after expansion).", 2)
 
@@ -379,6 +388,8 @@ def main() -> int:
 
         print("Resolved config:")
         print(json.dumps(dataclasses.asdict(cfg), indent=2))
+
+    hf_token = args.hf_token or os.getenv("HF_TOKEN")
 
     handler = create_cli_handler(quiet, show_progress)
     model = None
@@ -469,6 +480,8 @@ def main() -> int:
                 json_bundle_path=bundle_out,
                 correction_srt=Path(args.correction_srt) if args.correction_srt else None,
                 script_path=script_path,
+                diarize=args.diarize,
+                hf_token=hf_token,
                 dry_run=args.dry_run,
                 keep_wav=args.keep_wav,
                 tmpdir=Path(args.tmpdir) if args.tmpdir else None,

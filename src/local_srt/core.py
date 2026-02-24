@@ -27,6 +27,7 @@ from .subtitle_generation import (
     words_to_subtitles,
 )
 from .alignment import align_corrected_srt, align_script_to_segments
+from .diarization import assign_speakers, is_diarization_available, load_diarization_pipeline, run_diarization
 from .script_reader import read_docx
 from .system import ensure_parent_dir, ffmpeg_ok, probe_duration_seconds
 
@@ -68,6 +69,8 @@ def transcribe_file_internal(
     json_bundle_path: Optional[Path],
     correction_srt: Optional[Path],
     script_path: Optional[Path],
+    diarize: bool,
+    hf_token: Optional[str],
     cfg: ResolvedConfig,
     model: Any,
     device_used: str,
