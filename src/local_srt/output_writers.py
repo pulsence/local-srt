@@ -103,6 +103,13 @@ def atomic_write_text(path: Path, content: str) -> None:
 # Format Writers
 # ============================================================
 
+def _subtitle_text(sb: SubtitleBlock) -> str:
+    text = normalize_spaces(" ".join(sb.lines))
+    if sb.speaker:
+        return f"{sb.speaker}: {text}".strip()
+    return text
+
+
 def write_srt(subs: List[SubtitleBlock], out_path: Path, *, max_chars: int, max_lines: int) -> None:
     """Write subtitles in SRT (SubRip) format.
 
@@ -114,7 +121,7 @@ def write_srt(subs: List[SubtitleBlock], out_path: Path, *, max_chars: int, max_
     """
     chunks: List[str] = []
     for i, sb in enumerate(subs, start=1):
-        text = normalize_spaces(" ".join(sb.lines))
+        text = _subtitle_text(sb)
         lines = wrap_text_lines(text, max_chars)
         if len(lines) > max_lines:
             lines = lines[:max_lines]
@@ -137,7 +144,7 @@ def write_vtt(subs: List[SubtitleBlock], out_path: Path, *, max_chars: int, max_
     """
     chunks: List[str] = ["WEBVTT\n"]
     for sb in subs:
-        text = normalize_spaces(" ".join(sb.lines))
+        text = _subtitle_text(sb)
         lines = wrap_text_lines(text, max_chars)
         if len(lines) > max_lines:
             lines = lines[:max_lines]
@@ -179,7 +186,7 @@ def write_ass(subs: List[SubtitleBlock], out_path: Path, *, max_chars: int, max_
     )
     events: List[str] = [header]
     for sb in subs:
-        text = normalize_spaces(" ".join(sb.lines))
+        text = _subtitle_text(sb)
         lines = wrap_text_lines(text, max_chars)
         if len(lines) > max_lines:
             lines = lines[:max_lines]

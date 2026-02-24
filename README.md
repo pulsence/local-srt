@@ -3,7 +3,7 @@
 Local SRT generator using **faster-whisper** (offline transcription) and **ffmpeg** (media decoding).
 
 This tool converts audio or video files into readable `.srt` subtitle files with intelligent
-punctuation-aware chunking, pacing heuristics, and presets for YouTube, Shorts, and Podcasts.
+punctuation-aware chunking, pacing heuristics, and presets for YouTube, Shorts, Podcasts, and Transcript output.
 
 ## Caveat Emptor
 
@@ -27,6 +27,7 @@ but not every path is exhaustively validated.
   - `yt` - standard YouTube captions
   - `shorts` - fast-paced, compact captions
   - `podcast` - slower pacing, longer phrasing
+  - `transcript` - large, paragraph-like blocks
 - CUDA support with automatic CPU fallback
 - Progress indicators with segment-based timing
 - Supports batch processing of files
@@ -117,6 +118,7 @@ Presets:
 srtgen input.mp4 --preset yt
 srtgen input.mp4 --preset shorts
 srtgen input.mp4 --preset podcast
+srtgen input.mp4 --preset transcript
 ```
 
 Pipeline modes:
@@ -244,6 +246,7 @@ Output control:
 --emit-transcript PATH
 --emit-segments PATH
 --emit-bundle PATH
+--word-srt PATH
 --overwrite
 ```
 
@@ -255,6 +258,7 @@ Output control:
 - `--emit-transcript`: Also write a plain-text transcript. If a directory is provided, a file is created per input.
 - `--emit-segments`: Also write segments JSON (word timestamps included).
 - `--emit-bundle`: Also write a full JSON bundle (segments + subs + config).
+- `--word-srt`: Shorts mode only. Override the word-level SRT path (default `<stem>.words.srt`).
 - `--overwrite`: Overwrite outputs if they already exist.
 
 Model + device:
@@ -287,13 +291,13 @@ Model + device:
 Preset + config:
 
 ```bash
---preset shorts|yt|podcast
+--preset shorts|yt|podcast|transcript
 --mode general|shorts|transcript
 --config PATH
 --dry-run
 ```
 
-- `--preset`: Apply a preset (`shorts`, `yt`, `podcast`).
+- `--preset`: Apply a preset (`shorts`, `yt`, `podcast`, `transcript`).
 - `--mode`: Select the pipeline mode (`general`, `shorts`, `transcript`).
 - `--config`: JSON config file. CLI args override config values.
 - `--dry-run`: Validate inputs and show resolved settings without transcribing.

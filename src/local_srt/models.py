@@ -13,7 +13,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 import enum
-from typing import List
+from typing import List, Optional
 
 
 # ============================================================
@@ -90,10 +90,12 @@ class SubtitleBlock:
         start: Start time in seconds
         end: End time in seconds
         lines: List of text lines to display
+        speaker: Optional speaker label to prefix in outputs
     """
     start: float
     end: float
     lines: List[str]
+    speaker: Optional[str] = None
 
 
 @dataclass

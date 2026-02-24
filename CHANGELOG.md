@@ -15,6 +15,9 @@ All notable changes to this project are documented in this file.
 - Added `PipelineMode` enum (`general`, `shorts`, `transcript`) and `--mode` CLI flag (default: `general`).
 - Added `mode: PipelineMode` parameter to `transcribe_file()` and `transcribe_batch()` API functions.
 - Added diagnostic transcription flags: `--no-condition-on-previous-text`, `--no-speech-threshold`, `--log-prob-threshold`, `--compression-ratio-threshold`, `--vad-filter/--no-vad-filter`.
+- Added Shorts mode dual-output: sentence-level SRT plus word-level SRT (default `<stem>.words.srt`, override with `--word-srt`).
+- Added Transcript mode large-block chunker and `transcript` preset for paragraph-style output.
+- Added optional `speaker` label on `SubtitleBlock` with speaker prefixes in SRT/VTT/ASS outputs when set.
 
 ### Changed
 

@@ -67,12 +67,28 @@ PRESETS: Dict[str, Dict[str, Any]] = {
         "transcription": {},
         "silence": {},
     },
+    "transcript": {
+        "formatting": {
+            "max_chars": 80,
+            "max_lines": 4,
+            "target_cps": 17.0,
+            "min_dur": 2.0,
+            "max_dur": 30.0,
+            "prefer_punct_splits": True,
+            "allow_commas": True,
+            "allow_medium": True,
+            "min_gap": 0.08,
+            "pad": 0.00,
+        },
+        "transcription": {},
+        "silence": {},
+    },
 }
 
 MODE_PIPELINE_DEFAULTS: Dict[PipelineMode, Dict[str, Any]] = {
     PipelineMode.GENERAL: {"formatting": {}, "transcription": {}, "silence": {}},
     PipelineMode.SHORTS: {"formatting": {}, "transcription": {}, "silence": {}},
-    PipelineMode.TRANSCRIPT: {"formatting": {}, "transcription": {}, "silence": {}},
+    PipelineMode.TRANSCRIPT: PRESETS["transcript"],
 }
 
 

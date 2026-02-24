@@ -217,6 +217,82 @@ def chunk_segments_to_subtitles(
     return subs
 
 
+def chunk_segments_to_transcript_blocks(
+    segments: List[Any],
+    cfg: ResolvedConfig,
+    silences: List[Tuple[float, float]],
+) -> List[SubtitleBlock]:
+    """Convert transcription segments into larger transcript-style blocks.
+
+    Blocks are merged across consecutive segments, split on silence gaps,
+    and capped by max duration. Text is wrapped into lines based on
+    formatting constraints.
+    """
+    raw_blocks: List[Tuple[float, float, str]] = []
+    cur_start: Optional[float] = None
+    cur_end: Optional[float] = None
+    cur_text: List[str] = []
+
+    for seg in segments:
+        txt = normalize_spaces(getattr(seg, "text", ""))
+        if not txt:
+            continue
+        seg_start = float(seg.start)
+        seg_end = float(seg.end)
+
+        if cur_start is None:
+            cur_start = seg_start
+            cur_end = seg_end
+            cur_text = [txt]
+            continue
+
+        if cur_end is not None and silence_between(cur_end, seg_start, silences):
+            raw_blocks.append((cur_start, cur_end, normalize_spaces(" ".join(cur_text))))
+            cur_start = seg_start
+            cur_end = seg_end
+            cur_text = [txt]
+            continue
+
+        if cur_start is not None and (seg_end - cur_start) > cfg.formatting.max_dur:
+            raw_blocks.append((cur_start, cur_end or seg_end, normalize_spaces(" ".join(cur_text))))
+            cur_start = seg_start
+            cur_end = seg_end
+            cur_text = [txt]
+            continue
+
+        cur_text.append(txt)
+        cur_end = seg_end
+
+    if cur_text and cur_start is not None and cur_end is not None:
+        raw_blocks.append((cur_start, cur_end, normalize_spaces(" ".join(cur_text))))
+
+    subs: List[SubtitleBlock] = []
+    for s, e, txt in raw_blocks:
+        if not txt:
+            continue
+        lines = wrap_text_lines(txt, cfg.formatting.max_chars)
+        if len(lines) <= cfg.formatting.max_lines:
+            subs.append(SubtitleBlock(start=float(s), end=float(e), lines=lines))
+            continue
+
+        parts = split_text_into_blocks(
+            txt,
+            cfg.formatting.max_chars,
+            cfg.formatting.max_lines,
+            allow_commas=cfg.formatting.allow_commas,
+            allow_medium=cfg.formatting.allow_medium,
+            prefer_punct_splits=cfg.formatting.prefer_punct_splits,
+        )
+        timed_parts = distribute_time(s, e, parts) if len(parts) > 1 else [(s, e, txt)]
+        for ps, pe, ptxt in timed_parts:
+            lines = wrap_text_lines(ptxt, cfg.formatting.max_chars)
+            if len(lines) > cfg.formatting.max_lines:
+                lines = lines[:cfg.formatting.max_lines]
+            subs.append(SubtitleBlock(start=float(ps), end=float(pe), lines=lines))
+
+    return subs
+
+
 # ============================================================
 # Word-Based Subtitle Generation
 # ============================================================
@@ -324,7 +400,7 @@ def apply_silence_alignment(
 
         if e < s + 0.001:
             e = s + 0.001
-        aligned.append(SubtitleBlock(s, e, sb.lines))
+        aligned.append(SubtitleBlock(s, e, sb.lines, sb.speaker))
 
     return aligned
 
@@ -379,7 +455,9 @@ def hygiene_and_polish(
             continue
         s = max(0.0, float(sb.start))
         e = max(s + 0.001, float(sb.end))
-        cleaned.append(SubtitleBlock(s, e, wrap_text_lines(txt, 10_000)))  # keep as single line temporarily
+        cleaned.append(
+            SubtitleBlock(s, e, wrap_text_lines(txt, 10_000), sb.speaker)
+        )  # keep as single line temporarily
 
     if not cleaned:
         return []
@@ -390,7 +468,7 @@ def hygiene_and_polish(
     # Merge identical consecutive blocks unless a silence gap is present
     merged: List[SubtitleBlock] = []
     for sb in cleaned:
-        if merged and subs_text(merged[-1]) == subs_text(sb):
+        if merged and subs_text(merged[-1]) == subs_text(sb) and merged[-1].speaker == sb.speaker:
             if silence_intervals and silence_between(merged[-1].end, sb.start, silence_intervals):
                 merged.append(sb)
             else:
@@ -433,7 +511,7 @@ def hygiene_and_polish(
                 if e > next_start - min_gap:
                     e = max(s + 0.001, next_start - min_gap)
 
-        out.append(SubtitleBlock(s, e, sb.lines))
+        out.append(SubtitleBlock(s, e, sb.lines, sb.speaker))
 
     # Final monotonic clamp
     final: List[SubtitleBlock] = []
@@ -441,7 +519,7 @@ def hygiene_and_polish(
     for sb in out:
         s = max(last_end, sb.start)
         e = max(s + 0.001, sb.end)
-        final.append(SubtitleBlock(s, e, sb.lines))
+        final.append(SubtitleBlock(s, e, sb.lines, sb.speaker))
         last_end = e
 
     return final

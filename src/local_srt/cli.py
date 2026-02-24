@@ -156,7 +156,7 @@ def main() -> int:
         help="Disable VAD filtering during transcription.",
     )
 
-    ap.add_argument("--preset", default=None, help="Preset formatting: shorts | yt | podcast.")
+    ap.add_argument("--preset", default=None, help="Preset formatting: shorts | yt | podcast | transcript.")
     ap.add_argument(
         "--mode",
         choices=[mode.value for mode in PipelineMode],
@@ -395,12 +395,20 @@ def main() -> int:
         segments_out = side_path(args.emit_segments, ".segments.json")
         bundle_out = side_path(args.emit_bundle, ".bundle.json") if args.emit_bundle else None
 
+        def word_path(primary_out: Path, user_path: Optional[str]) -> Path:
+            if not user_path:
+                return primary_out.with_name(f"{primary_out.stem}.words.srt")
+            p = Path(user_path)
+            if p.exists() and p.is_dir():
+                return p / f"{primary_out.stem}.words.srt"
+            if user_path.endswith(os.sep) or user_path.endswith("/"):
+                p.mkdir(parents=True, exist_ok=True)
+                return p / f"{primary_out.stem}.words.srt"
+            return p
+
         word_out: Optional[Path] = None
         if mode == PipelineMode.SHORTS:
-            if args.word_srt:
-                word_out = side_path(args.word_srt, "_words.srt")
-            else:
-                word_out = primary_out.with_name(f"{primary_out.stem}_words.srt")
+            word_out = word_path(primary_out, args.word_srt)
             if word_out:
                 ok_word, reason = preflight_one(f, word_out, args.overwrite)
                 if not ok_word:

@@ -5,8 +5,11 @@ from __future__ import annotations
 from typing import List, Tuple
 
 from local_srt.models import FormattingConfig, ResolvedConfig, SubtitleBlock
+from local_srt.output_writers import write_srt
 from local_srt.subtitle_generation import (
     apply_silence_alignment,
+    chunk_segments_to_subtitles,
+    chunk_segments_to_transcript_blocks,
     chunk_words_to_subtitles,
     hygiene_and_polish,
     words_to_subtitles,
@@ -123,3 +126,47 @@ def test_shorts_pipeline_outputs_two_lists(mock_word_items):
         SubtitleBlock(0.0, 0.4, ["Hello"]),
         SubtitleBlock(0.4, 0.9, ["world"]),
     ]
+
+
+def test_transcript_blocks_larger_than_general(mock_segments):
+    cfg = ResolvedConfig(formatting=FormattingConfig(max_dur=30.0))
+    segments = mock_segments(
+        [
+            {"start": 0.0, "end": 1.0, "text": "First sentence."},
+            {"start": 1.1, "end": 2.0, "text": "Second sentence."},
+            {"start": 2.1, "end": 3.0, "text": "Third sentence."},
+        ]
+    )
+    silences: List[Tuple[float, float]] = []
+
+    general = chunk_segments_to_subtitles(segments, cfg)
+    transcript = chunk_segments_to_transcript_blocks(segments, cfg, silences)
+
+    assert len(transcript) < len(general)
+
+
+def test_transcript_splits_on_silence(mock_segments):
+    cfg = ResolvedConfig(formatting=FormattingConfig(max_dur=30.0))
+    segments = mock_segments(
+        [
+            {"start": 0.0, "end": 1.0, "text": "Hello there."},
+            {"start": 3.0, "end": 4.0, "text": "General Kenobi."},
+        ]
+    )
+    silences = [(1.2, 2.5)]
+
+    transcript = chunk_segments_to_transcript_blocks(segments, cfg, silences)
+
+    assert len(transcript) == 2
+    assert transcript[0].end <= silences[0][0]
+    assert transcript[1].start >= silences[0][1]
+
+
+def test_speaker_prefix_rendered(tmp_path):
+    subs = [SubtitleBlock(0.0, 1.0, ["Hello world"], speaker="Alex")]
+    out_path = tmp_path / "speaker.srt"
+
+    write_srt(subs, out_path, max_chars=42, max_lines=2)
+
+    content = out_path.read_text(encoding="utf-8")
+    assert "Alex: Hello world" in content

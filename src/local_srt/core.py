@@ -18,6 +18,7 @@ from . import __version__ as TOOL_VERSION
 from .output_writers import segments_to_jsonable, write_ass, write_json_bundle, write_srt, write_txt, write_vtt
 from .subtitle_generation import (
     apply_silence_alignment,
+    chunk_segments_to_transcript_blocks,
     chunk_segments_to_subtitles,
     chunk_words_to_subtitles,
     collect_words,
@@ -197,10 +198,7 @@ def transcribe_file_internal(
             subs = chunk_words_to_subtitles(words, cfg, silences)
             word_subs = words_to_subtitles(words)
         elif mode == PipelineMode.TRANSCRIPT:
-            if words:
-                subs = chunk_words_to_subtitles(words, cfg, silences)
-            else:
-                subs = chunk_segments_to_subtitles(seg_list, cfg)
+            subs = chunk_segments_to_transcript_blocks(seg_list, cfg, silences)
         elif word_level:
             if not words:
                 raise ValueError("Word-level output requested but no word timestamps are available.")

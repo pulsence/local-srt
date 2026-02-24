@@ -107,22 +107,23 @@ Use `--preset` to apply preset tuning:
 srtgen input.mp4 --preset shorts
 srtgen input.mp4 --preset yt
 srtgen input.mp4 --preset podcast
+srtgen input.mp4 --preset transcript
 ```
 
 Preset values (defaults are from the base config):
 
-| Setting | Default | shorts | yt | podcast |
-| --- | --- | --- | --- | --- |
-| `max_chars` | 42 | 18 | 42 | 40 |
-| `max_lines` | 2 | 1 | 2 | 2 |
-| `target_cps` | 17.0 | 18.0 | 17.0 | 16.0 |
-| `min_dur` | 1.0 | 0.7 | 1.0 | 0.9 |
-| `max_dur` | 6.0 | 3.0 | 6.0 | 5.0 |
-| `prefer_punct_splits` | False | False | False | True |
-| `allow_commas` | True | True | True | True |
-| `allow_medium` | True | True | True | True |
-| `min_gap` | 0.08 | 0.08 | 0.08 | 0.08 |
-| `pad` | 0.00 | 0.00 | 0.00 | 0.05 |
+| Setting | Default | shorts | yt | podcast | transcript |
+| --- | --- | --- | --- | --- | --- |
+| `max_chars` | 42 | 18 | 42 | 40 | 80 |
+| `max_lines` | 2 | 1 | 2 | 2 | 4 |
+| `target_cps` | 17.0 | 18.0 | 17.0 | 16.0 | 17.0 |
+| `min_dur` | 1.0 | 0.7 | 1.0 | 0.9 | 2.0 |
+| `max_dur` | 6.0 | 3.0 | 6.0 | 5.0 | 30.0 |
+| `prefer_punct_splits` | False | False | False | True | True |
+| `allow_commas` | True | True | True | True | True |
+| `allow_medium` | True | True | True | True | True |
+| `min_gap` | 0.08 | 0.08 | 0.08 | 0.08 | 0.08 |
+| `pad` | 0.00 | 0.00 | 0.00 | 0.05 | 0.00 |
 
 These values map to `formatting.*` in the config file.
 
@@ -139,7 +140,19 @@ srtgen input.mp4 --mode transcript
 Notes:
 
 - `general` is the default pipeline.
-- `shorts` and `transcript` currently follow the general pipeline path; their specialized behavior arrives in Phase 4.
+- `shorts` writes two outputs: the primary sentence-level SRT and a word-level SRT for animation.
+- `transcript` produces larger, paragraph-like blocks and splits at detected silences and the `max_dur` limit.
+
+Shorts defaults:
+
+- Word SRT path defaults to `<stem>.words.srt` next to the primary output.
+- Override the word SRT path with `--word-srt PATH`.
+
+Transcript notes:
+
+- Transcript mode applies the `transcript` formatting defaults (80 chars, 4 lines, 30s max).
+- Use `--preset transcript` if you want those settings with `--mode general`.
+- When speaker labels are present, outputs prefix lines as `Speaker: text`.
 
 ## Formatting Options
 
@@ -166,6 +179,7 @@ Silence-aware splitting and alignment are always enabled.
 ## Transcription Options
 
 - `--word-level`: Output one subtitle per word.
+- `--word-srt`: Shorts mode only. Override the word-level SRT output path.
 - `--no-condition-on-previous-text`: Disable conditioning on previous text.
 - `--no-speech-threshold`: Override the no-speech threshold.
 - `--log-prob-threshold`: Override the log probability threshold.

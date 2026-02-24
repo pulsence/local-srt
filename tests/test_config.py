@@ -15,7 +15,7 @@ class TestPresets:
 
     def test_preset_keys(self):
         """Test that expected preset keys exist."""
-        expected_keys = {"shorts", "yt", "podcast"}
+        expected_keys = {"shorts", "yt", "podcast", "transcript"}
         assert set(PRESETS.keys()) == expected_keys
 
     def test_preset_structure(self):
@@ -48,6 +48,15 @@ class TestPresets:
         assert podcast["formatting"]["max_lines"] == 2
         assert podcast["formatting"]["target_cps"] == 16.0
         assert podcast["formatting"]["prefer_punct_splits"] is True
+
+    def test_transcript_preset(self):
+        """Test transcript preset values."""
+        transcript = PRESETS["transcript"]
+        assert transcript["formatting"]["max_chars"] == 80
+        assert transcript["formatting"]["max_lines"] == 4
+        assert transcript["formatting"]["min_dur"] == 2.0
+        assert transcript["formatting"]["max_dur"] == 30.0
+        assert transcript["formatting"]["prefer_punct_splits"] is True
 
 
 class TestLoadConfigFile:
