@@ -152,6 +152,7 @@ Transcript notes:
 
 - Transcript mode applies the `transcript` formatting defaults (80 chars, 4 lines, 30s max).
 - Use `--preset transcript` if you want those settings with `--mode general`.
+- Use `--diarize` to enable speaker-labeled output in Transcript mode.
 - When speaker labels are present, outputs prefix lines as `Speaker: text`.
 
 ## Formatting Options
@@ -227,6 +228,25 @@ Shorts workflow:
 1. Run `--mode shorts` to generate the sentence SRT.
 2. Edit the sentence SRT text.
 3. Re-run with `--mode shorts --correction-srt corrected.srt` to regenerate the word-level SRT.
+
+## Speaker Diarization
+
+Enable speaker labels for Transcript output:
+
+Installation:
+
+- `pip install local-srt[diarize]`
+
+Usage:
+
+- `--diarize`: Enable speaker diarization (Transcript mode only).
+- `--hf-token TOKEN`: HuggingFace token for diarization.
+- `HF_TOKEN`: Environment variable fallback for `--hf-token`.
+
+Notes:
+
+- Diarization runs only in Transcript mode (`--mode transcript`).
+- Output prefixes each cue with `Speaker: text` when labels are available.
 
 ## Batch Processing
 

@@ -21,6 +21,8 @@ All notable changes to this project are documented in this file.
 - Added script prompt inputs: `--prompt` and `--prompt-file` (including `.docx` support).
 - Added script-guided substitution with `--script` to replace matched segments using script text.
 - Added corrected SRT alignment with `--correction-srt` for Shorts word-level regeneration.
+- Added optional diarization extra: `pip install local-srt[diarize]`.
+- Added `--diarize` and `--hf-token` for speaker-labeled transcript output.
 
 ### Changed
 

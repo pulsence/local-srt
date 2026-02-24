@@ -570,9 +570,9 @@ Use the `.docx` script as the authoritative text source at the sentence level. S
 
 ---
 
-## Phase 6: Speaker Diarization
+## Phase 6: Speaker Diarization (COMPLETED)
 
-### 6.1: pyannote-audio Integration
+### 6.1: pyannote-audio Integration (COMPLETED)
 
 Add optional pyannote-audio v3 as a separate install extra. Create a diarization module that wraps the pyannote pipeline and assigns speaker labels to segments.
 
@@ -612,7 +612,7 @@ Add optional pyannote-audio v3 as a separate install extra. Create a diarization
 
 ---
 
-### 6.2: Transcript Mode Integration
+### 6.2: Transcript Mode Integration (COMPLETED)
 
 Wire speaker diarization into the Transcript mode pipeline. Each `SubtitleBlock` receives the dominant speaker label from its time range. SRT output includes a speaker prefix.
 
@@ -641,7 +641,7 @@ Wire speaker diarization into the Transcript mode pipeline. Each `SubtitleBlock`
 
 ---
 
-### 6.3: Code Review — Phase 6
+### 6.3: Code Review — Phase 6 (COMPLETED)
 
 **Tasks**:
 
@@ -654,7 +654,7 @@ Wire speaker diarization into the Transcript mode pipeline. Each `SubtitleBlock`
 
 ---
 
-### 6.4: Changelog — Phase 6
+### 6.4: Changelog — Phase 6 (COMPLETED)
 
 **Tasks**:
 
