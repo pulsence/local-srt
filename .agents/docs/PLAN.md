@@ -667,9 +667,9 @@ Wire speaker diarization into the Transcript mode pipeline. Each `SubtitleBlock`
 
 ---
 
-## Phase 7: Release Preparation
+## Phase 7: Release Preparation (COMPLETED)
 
-### 7.1: Final Documentation Review
+### 7.1: Final Documentation Review (COMPLETED)
 
 Review all user-facing documentation for completeness and accuracy before tagging the release. Every flag and workflow documented in `USER_GUIDE.md` must match the actual implementation.
 
@@ -691,7 +691,7 @@ Review all user-facing documentation for completeness and accuracy before taggin
 
 ---
 
-### 7.2: Version Bump to 0.3.0
+### 7.2: Version Bump to 0.3.0 (COMPLETED)
 
 **Tasks**:
 
@@ -711,7 +711,7 @@ Review all user-facing documentation for completeness and accuracy before taggin
 
 ---
 
-### 7.3: Code Review — Phase 7
+### 7.3: Code Review — Phase 7 (COMPLETED)
 
 **Tasks**:
 

@@ -1,6 +1,6 @@
 # Local SRT User Guide
 
-This guide documents the current CLI behavior for Local SRT 0.2.x.
+This guide documents the current CLI behavior for Local SRT 0.3.0.
 
 ## Installation
 
@@ -10,6 +10,21 @@ Install from PyPI:
 python -m pip install local-srt
 ```
 
+For speaker diarization support:
+
+```bash
+pip install local-srt[diarize]
+```
+
+Install from a GitHub download:
+
+1. Download the repository (zip) from GitHub and extract it.
+2. From the extracted folder, run:
+
+```bash
+python -m pip install .
+```
+
 Requirements:
 
 - Python 3.10+
@@ -17,6 +32,32 @@ Requirements:
 - `ffprobe` available on `PATH` (recommended)
 
 Models are downloaded automatically on first use when a model is not present in the local cache.
+
+## Installing ffmpeg
+
+### Windows
+
+```powershell
+winget install Gyan.FFmpeg
+```
+
+or
+
+```powershell
+choco install ffmpeg
+```
+
+### macOS
+
+```bash
+brew install ffmpeg
+```
+
+### Linux
+
+```bash
+sudo apt install ffmpeg
+```
 
 ## Basic Usage
 
@@ -348,3 +389,103 @@ Use `--dry-run` to validate inputs and show the resolved config without running 
 - `--no-progress` disables the progress line.
 - `--debug` prints stack traces for errors.
 - `--version` prints the tool version and exits.
+
+## Library Usage
+
+Minimal usage:
+
+```python
+from pathlib import Path
+from local_srt import ResolvedConfig, load_model, transcribe_file
+
+model, device_used, compute_type = load_model(
+    model_name="small",
+    device="auto",
+    strict_cuda=False,
+)
+
+result = transcribe_file(
+    input_path=Path("input.mp3"),
+    output_path=Path("output.srt"),
+    fmt="srt",
+    cfg=ResolvedConfig(),
+    model=model,
+    device_used=device_used,
+    compute_type_used=compute_type,
+)
+
+print(result.success, result.output_path)
+```
+
+With event handling:
+
+```python
+from local_srt import EventEmitter, LogEvent, ProgressEvent
+
+emitter = EventEmitter()
+
+def handler(event):
+    if isinstance(event, LogEvent):
+        print(event.message)
+    elif isinstance(event, ProgressEvent):
+        print(f"{event.percent:5.1f}%")
+
+emitter.subscribe(handler)
+```
+
+Pass the handler into API calls:
+
+```python
+model, device_used, compute_type = load_model(
+    model_name="small",
+    device="auto",
+    strict_cuda=False,
+    event_handler=emitter,
+)
+
+result = transcribe_file(
+    input_path=Path("input.mp3"),
+    output_path=Path("output.srt"),
+    fmt="srt",
+    cfg=ResolvedConfig(),
+    model=model,
+    device_used=device_used,
+    compute_type_used=compute_type,
+    event_handler=emitter,
+)
+```
+
+Batch usage (single model load):
+
+```python
+from local_srt import transcribe_batch
+
+inputs = [Path("a.mp3"), Path("b.mp3")]
+batch = transcribe_batch(
+    input_paths=inputs,
+    outdir=Path("out"),
+    fmt="srt",
+    cfg=ResolvedConfig(),
+    model=model,
+    device_used=device_used,
+    compute_type_used=compute_type,
+    event_handler=emitter,
+)
+
+print(batch.successful, batch.failed)
+```
+
+## Troubleshooting
+
+**ffmpeg not found**
+
+Verify ffmpeg is on PATH:
+
+```bash
+ffmpeg -version
+```
+
+**CUDA errors**
+
+- Ensure NVIDIA drivers are installed.
+- The tool falls back to CPU automatically unless `--strict-cuda` is set.
