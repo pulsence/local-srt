@@ -189,6 +189,16 @@ def transcribe_file_internal(
 
         _emit(event_handler, StageEvent(stage="Chunking + formatting", stage_number=3, total_stages=4))
         t1 = time.time()
+        if diarize and mode == PipelineMode.TRANSCRIPT:
+            if not is_diarization_available():
+                raise RuntimeError("pyannote.audio is required for diarization.")
+            if not hf_token:
+                raise ValueError("HF token is required for diarization. Use --hf-token or HF_TOKEN.")
+            _emit(event_handler, LogEvent(message="Running speaker diarization..."))
+            pipeline = load_diarization_pipeline(hf_token)
+            diarization = run_diarization(pipeline, tmp_wav)
+            seg_list = assign_speakers(seg_list, diarization)
+
         script_applied = False
         if script_path:
             if script_path.suffix.lower() == ".docx":

@@ -228,10 +228,23 @@ def chunk_segments_to_transcript_blocks(
     and capped by max duration. Text is wrapped into lines based on
     formatting constraints.
     """
-    raw_blocks: List[Tuple[float, float, str]] = []
+    raw_blocks: List[Tuple[float, float, str, Optional[str]]] = []
     cur_start: Optional[float] = None
     cur_end: Optional[float] = None
     cur_text: List[str] = []
+    cur_segments: List[Any] = []
+
+    def dominant_speaker(segs: List[Any]) -> Optional[str]:
+        totals: dict[str, float] = {}
+        for seg in segs:
+            label = getattr(seg, "speaker", None)
+            if not label:
+                continue
+            dur = max(0.0, float(getattr(seg, "end", 0.0)) - float(getattr(seg, "start", 0.0)))
+            totals[label] = totals.get(label, 0.0) + dur
+        if not totals:
+            return None
+        return max(totals.items(), key=lambda item: item[1])[0]
 
     for seg in segments:
         txt = normalize_spaces(getattr(seg, "text", ""))
@@ -244,35 +257,50 @@ def chunk_segments_to_transcript_blocks(
             cur_start = seg_start
             cur_end = seg_end
             cur_text = [txt]
+            cur_segments = [seg]
             continue
 
         if cur_end is not None and silence_between(cur_end, seg_start, silences):
-            raw_blocks.append((cur_start, cur_end, normalize_spaces(" ".join(cur_text))))
+            raw_blocks.append(
+                (cur_start, cur_end, normalize_spaces(" ".join(cur_text)), dominant_speaker(cur_segments))
+            )
             cur_start = seg_start
             cur_end = seg_end
             cur_text = [txt]
+            cur_segments = [seg]
             continue
 
         if cur_start is not None and (seg_end - cur_start) > cfg.formatting.max_dur:
-            raw_blocks.append((cur_start, cur_end or seg_end, normalize_spaces(" ".join(cur_text))))
+            raw_blocks.append(
+                (
+                    cur_start,
+                    cur_end or seg_end,
+                    normalize_spaces(" ".join(cur_text)),
+                    dominant_speaker(cur_segments),
+                )
+            )
             cur_start = seg_start
             cur_end = seg_end
             cur_text = [txt]
+            cur_segments = [seg]
             continue
 
         cur_text.append(txt)
         cur_end = seg_end
+        cur_segments.append(seg)
 
     if cur_text and cur_start is not None and cur_end is not None:
-        raw_blocks.append((cur_start, cur_end, normalize_spaces(" ".join(cur_text))))
+        raw_blocks.append(
+            (cur_start, cur_end, normalize_spaces(" ".join(cur_text)), dominant_speaker(cur_segments))
+        )
 
     subs: List[SubtitleBlock] = []
-    for s, e, txt in raw_blocks:
+    for s, e, txt, speaker in raw_blocks:
         if not txt:
             continue
         lines = wrap_text_lines(txt, cfg.formatting.max_chars)
         if len(lines) <= cfg.formatting.max_lines:
-            subs.append(SubtitleBlock(start=float(s), end=float(e), lines=lines))
+            subs.append(SubtitleBlock(start=float(s), end=float(e), lines=lines, speaker=speaker))
             continue
 
         parts = split_text_into_blocks(
@@ -288,7 +316,7 @@ def chunk_segments_to_transcript_blocks(
             lines = wrap_text_lines(ptxt, cfg.formatting.max_chars)
             if len(lines) > cfg.formatting.max_lines:
                 lines = lines[:cfg.formatting.max_lines]
-            subs.append(SubtitleBlock(start=float(ps), end=float(pe), lines=lines))
+            subs.append(SubtitleBlock(start=float(ps), end=float(pe), lines=lines, speaker=speaker))
 
     return subs
 

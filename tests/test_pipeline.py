@@ -2,6 +2,7 @@
 """Deterministic pipeline tests (word-level)."""
 from __future__ import annotations
 
+from dataclasses import dataclass
 from typing import List, Tuple
 
 from local_srt.models import FormattingConfig, ResolvedConfig, SubtitleBlock
@@ -170,3 +171,41 @@ def test_speaker_prefix_rendered(tmp_path):
 
     content = out_path.read_text(encoding="utf-8")
     assert "Alex: Hello world" in content
+
+
+@dataclass
+class _Seg:
+    start: float
+    end: float
+    text: str
+    words: None = None
+    speaker: str | None = None
+
+
+def test_transcript_speaker_single_label():
+    cfg = ResolvedConfig(formatting=FormattingConfig(max_dur=30.0))
+    segments = [
+        _Seg(0.0, 1.0, "Hello there.", speaker="S1"),
+        _Seg(1.0, 2.0, "General Kenobi.", speaker="S1"),
+    ]
+    silences: List[Tuple[float, float]] = []
+
+    transcript = chunk_segments_to_transcript_blocks(segments, cfg, silences)
+
+    assert transcript
+    assert all(block.speaker == "S1" for block in transcript)
+
+
+def test_transcript_speaker_change_on_silence():
+    cfg = ResolvedConfig(formatting=FormattingConfig(max_dur=30.0))
+    segments = [
+        _Seg(0.0, 1.0, "Hello there.", speaker="S1"),
+        _Seg(3.0, 4.0, "General Kenobi.", speaker="S2"),
+    ]
+    silences = [(1.2, 2.5)]
+
+    transcript = chunk_segments_to_transcript_blocks(segments, cfg, silences)
+
+    assert len(transcript) == 2
+    assert transcript[0].speaker == "S1"
+    assert transcript[1].speaker == "S2"
