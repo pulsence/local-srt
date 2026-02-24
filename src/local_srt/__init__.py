@@ -8,7 +8,7 @@ from __future__ import annotations
 from importlib import import_module
 from typing import Dict, Tuple
 
-__version__ = "0.2.0"
+__version__ = "0.3.0"
 
 _EXPORTS: Dict[str, Tuple[str, str]] = {
     "transcribe_file": (".api", "transcribe_file"),

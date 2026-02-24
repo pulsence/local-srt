@@ -6,6 +6,14 @@ All notable changes to this project are documented in this file.
 
 ### Added
 
+### Changed
+
+### Fixed
+
+## [0.3.0] - 2026-02-24
+
+### Added
+
 - Added deterministic pipeline tests with shared fixtures and SRT comparison helper.
 - Added opt-in integration tests with real audio fixtures and baseline SRTs.
 - Added reference transcript comparison with WER-based tolerance for minor transcription drift.
@@ -31,7 +39,6 @@ All notable changes to this project are documented in this file.
 - **Breaking:** Removed `use_silence_split` flag and user-facing `--word-timestamps`; silence detection, word timestamps, and silence alignment are always active.
 
 ### Fixed
-
 ## 0.2.0 - 2026-02-01
 
 - Local transcription using faster-whisper with ffmpeg-based media decoding.
