@@ -28,6 +28,10 @@ but not every path is exhaustively validated.
   - `shorts` - fast-paced, compact captions
   - `podcast` - slower pacing, longer phrasing
   - `transcript` - large, paragraph-like blocks
+- Script helpers:
+  - Prompt and script-based text guidance
+  - Corrected SRT alignment for Shorts word-level outputs
+- Optional speaker diarization for Transcript mode
 - CUDA support with automatic CPU fallback
 - Progress indicators with segment-based timing
 - Supports batch processing of files
@@ -42,6 +46,7 @@ but not every path is exhaustively validated.
 - **ffprobe** (recommended; usually included with ffmpeg)
 - Optional:
   - NVIDIA GPU + CUDA drivers for `--device cuda`
+  - Speaker diarization: `pip install local-srt[diarize]` and a HuggingFace token
 
 ## Installation
 
@@ -268,6 +273,12 @@ Model + device:
 --device auto|cpu|cuda
 --strict-cuda
 --language CODE
+--prompt TEXT
+--prompt-file PATH
+--script PATH
+--correction-srt PATH
+--diarize
+--hf-token TOKEN
 --word-level
 --no-condition-on-previous-text
 --no-speech-threshold FLOAT
@@ -281,6 +292,12 @@ Model + device:
 - `--device`: `auto` picks CUDA when available, otherwise CPU.
 - `--strict-cuda`: Fail instead of falling back to CPU when CUDA init fails.
 - `--language`: Optional language code (e.g., `en`). If omitted, auto-detect.
+- `--prompt`: Provide an initial prompt string for transcription.
+- `--prompt-file`: Read a prompt from `.docx` or `.txt`.
+- `--script`: Provide a `.docx`/`.txt` script for sentence-level substitution.
+- `--correction-srt`: Align corrected sentence SRT to word timestamps (Shorts workflow).
+- `--diarize`: Enable speaker diarization (Transcript mode only).
+- `--hf-token`: HuggingFace token for diarization (or set `HF_TOKEN` env var).
 - `--word-level`: Emit word-level subtitle cues.
 - `--no-condition-on-previous-text`: Disable conditioning on previous text.
 - `--no-speech-threshold`: Override the no-speech threshold.
