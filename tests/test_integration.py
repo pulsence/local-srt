@@ -165,8 +165,7 @@ def run_pipeline(
     else:
         subs = chunk_segments_to_subtitles(segments, cfg)
 
-    if silences:
-        subs = apply_silence_alignment(subs, silences)
+    subs = apply_silence_alignment(subs, silences)
 
     subs = hygiene_and_polish(
         subs,
