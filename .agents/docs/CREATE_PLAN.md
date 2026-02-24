@@ -38,8 +38,8 @@ After completing a task block, the following must be done:
 1. Create/update tests for new features
 3. Run tests: `pytest tests/ -v`
 4. Update `USER_GUIDE.md` to reflect the changes to the code base.
-6. Write commit message (see [COMMIT_MESSAGE.md](./COMMIT_MESSAGE.md))
-7. Update Architecture and Key Files sections in .agents/docs/ as needed
+5. Update Architecture and Key Files sections in .agents/docs/ as needed
+6. Run `git add` on all modified files and `git commit` with a message following the format in `COMMIT_MESSAGE.md` (see [COMMIT_MESSAGE.md](./COMMIT_MESSAGE.md))
 
 ## Success Criteria
 

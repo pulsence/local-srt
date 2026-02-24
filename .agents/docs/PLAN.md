@@ -10,7 +10,7 @@ Apply after every task block:
 2. Update `tests/` with tests for new or modified behaviour
 3. Update `USER_GUIDE.md` to reflect any new or changed flags, behaviours, or workflows
 4. Update Architecture and Key Files sections in `CLAUDE.md` as needed
-5. Write a commit (see `COMMIT_MESSAGE.md`)
+5. Run `git add` on all modified files and `git commit` with a message following the format in `COMMIT_MESSAGE.md`
 
 ---
 
@@ -343,6 +343,7 @@ Implement `PipelineMode.SHORTS` dispatch. Shorts mode produces two output files:
   - Shorts pipeline produces two `SubtitleBlock` lists: one chunked (sentence-level), one per-word (word-level)
   - Word-level blocks have single-word text and correct timestamps
 - Run `pytest tests/ -v`
+- Run `git add` on all modified files and `git commit` with a message following the format in `COMMIT_MESSAGE.md`
 
 **Files to modify**:
 
@@ -378,6 +379,7 @@ Implement `PipelineMode.TRANSCRIPT` with a new chunking strategy that merges seg
   - Blocks split at silence boundaries
   - Speaker prefix rendered correctly when `block.speaker` is set
 - Run `pytest tests/ -v`
+- Run `git add` on all modified files and `git commit` with a message following the format in `COMMIT_MESSAGE.md`
 
 **Files to modify**:
 
@@ -401,6 +403,7 @@ Implement `PipelineMode.TRANSCRIPT` with a new chunking strategy that merges seg
 - Verify Transcript blocks are larger than General blocks on the same input
 - Verify `speaker` field plumbs through `SubtitleBlock` → output writers correctly
 - Run `pytest tests/ -v && pytest -m integration`
+- Run `git add` on all modified files and `git commit` with a message following the format in `COMMIT_MESSAGE.md`
 
 ---
 
@@ -413,6 +416,8 @@ Implement `PipelineMode.TRANSCRIPT` with a new chunking strategy that merges seg
   - Complete the `--mode` section with full Shorts and Transcript documentation
   - Shorts: explain dual-output (sentence SRT + word SRT), `--word-srt` override, animation workflow use case
   - Transcript: explain large-block format, silence-based splitting, speaker prefix format
+- Run `pytest tests/ -v`
+- Run `git add` on all modified files and `git commit` with a message following the format in `COMMIT_MESSAGE.md`
 
 ---
 
@@ -437,6 +442,7 @@ Parse `.docx` Word documents and pass their text as `initial_prompt` to `model.t
   - Test `read_docx()` with a minimal `.docx` fixture containing paragraphs and a bulleted list
   - Test truncation behaviour at the character limit
 - Run `pytest tests/ -v`
+- Run `git add` on all modified files and `git commit` with a message following the format in `COMMIT_MESSAGE.md`
 
 **Files to create**:
 
@@ -481,6 +487,7 @@ Accept a corrected sentence-level SRT and derive a word-level SRT by aligning co
   - One word inserted in corrected: time distributed
   - One word deleted from corrected: word dropped
 - Run `pytest tests/ -v`
+- Run `git add` on all modified files and `git commit` with a message following the format in `COMMIT_MESSAGE.md`
 
 **Files to create**:
 
@@ -522,6 +529,7 @@ Use the `.docx` script as the authoritative text source at the sentence level. S
   - Script has one extra sentence (user skipped it in recording): extra sentence dropped, surrounding segments preserved
   - Script is missing one sentence (user ad-libbed): ad-lib kept as whisper text
 - Run `pytest tests/ -v`
+- Run `git add` on all modified files and `git commit` with a message following the format in `COMMIT_MESSAGE.md`
 
 **Files to modify**:
 
@@ -544,6 +552,7 @@ Use the `.docx` script as the authoritative text source at the sentence level. S
 - Verify `--prompt-file`, `--correction-srt`, and `--script` flags operate independently and do not interfere when combined
 - Verify `initial_prompt` is passed as `None` (not empty string) when unset — faster-whisper treats `None` and `""` differently
 - Run `pytest tests/ -v && pytest -m integration`
+- Run `git add` on all modified files and `git commit` with a message following the format in `COMMIT_MESSAGE.md`
 
 ---
 
@@ -556,6 +565,8 @@ Use the `.docx` script as the authoritative text source at the sentence level. S
   - Add **Script Input** section: `--prompt TEXT` and `--prompt-file PATH` with `.docx` support, behaviour explanation, token limit note
   - Add **Script-Guided Substitution** section: `--script PATH`, what it does, how unmatched audio is handled
   - Add **Corrected SRT Alignment** section: `--correction-srt PATH`, the Shorts correction workflow (generate sentence SRT → correct → re-derive word SRT)
+- Run `pytest tests/ -v`
+- Run `git add` on all modified files and `git commit` with a message following the format in `COMMIT_MESSAGE.md`
 
 ---
 
@@ -583,6 +594,7 @@ Add optional pyannote-audio v3 as a separate install extra. Create a diarization
   - `assign_speakers()` correctly labels segments given a mock diarization list
   - `is_diarization_available()` returns a bool without raising
 - Run `pytest tests/ -v`
+- Run `git add` on all modified files and `git commit` with a message following the format in `COMMIT_MESSAGE.md`
 
 **Files to create**:
 
@@ -617,6 +629,7 @@ Wire speaker diarization into the Transcript mode pipeline. Each `SubtitleBlock`
   - Single speaker throughout: all blocks share the same label
   - Speaker change at a silence boundary: blocks on each side have correct labels
 - Run `pytest tests/ -v && pytest -m integration`
+- Run `git add` on all modified files and `git commit` with a message following the format in `COMMIT_MESSAGE.md`
 
 **Files to modify**:
 
@@ -637,6 +650,7 @@ Wire speaker diarization into the Transcript mode pipeline. Each `SubtitleBlock`
 - Verify `HF_TOKEN` environment variable is read as a fallback for `--hf-token`
 - Verify speaker labels flow correctly: diarization intervals → segments → SubtitleBlocks → output file speaker prefix
 - Run `pytest tests/ -v && pytest -m integration`
+- Run `git add` on all modified files and `git commit` with a message following the format in `COMMIT_MESSAGE.md`
 
 ---
 
@@ -648,6 +662,8 @@ Wire speaker diarization into the Transcript mode pipeline. Each `SubtitleBlock`
 - Update `USER_GUIDE.md`:
   - Add **Speaker Diarization** section: installation (`pip install local-srt[diarize]`), HuggingFace account and token setup, `--diarize` and `--hf-token` flags, `HF_TOKEN` environment variable, which modes support diarization, expected output format
   - Add a note in the Transcript Mode section that `--diarize` enables speaker-labeled output
+- Run `pytest tests/ -v`
+- Run `git add` on all modified files and `git commit` with a message following the format in `COMMIT_MESSAGE.md`
 
 ---
 
@@ -664,6 +680,7 @@ Review all user-facing documentation for completeness and accuracy before taggin
 - Verify `CHANGELOG.md` contains entries for all five implementation phases with accurate descriptions
 - Run the full test suite: `pytest tests/ -v && pytest -m integration`
 - Manually run a representative command for each mode: `--mode general`, `--mode shorts`, `--mode transcript`
+- Run `git add` on all modified files and `git commit` with a message following the format in `COMMIT_MESSAGE.md`
 
 **Files to modify**:
 
@@ -701,3 +718,4 @@ Review all user-facing documentation for completeness and accuracy before taggin
 - Verify version string is consistent across `pyproject.toml`, `__init__.py`, and `CHANGELOG.md`
 - Verify no debug flags, print statements, or temporary code were left in the codebase
 - Final `pytest tests/ -v && pytest -m integration` run
+- Run `git add` on all modified files and `git commit` with a message following the format in `COMMIT_MESSAGE.md`

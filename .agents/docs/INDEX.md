@@ -45,9 +45,15 @@ See [ARCHITECTURE.md](./ARCHITECTURE.md) for detailed package structure and key 
 
 ## Developer Guides
 
-- [CREATE_PLAN.md](./CREATE_PLAN.md) - How to create task plans
+- When asked to create a plan read for how to do so: [CREATE_PLAN.md](./CREATE_PLAN.md).
 - Always use the commit message format in [COMMIT_MESSAGE.md](./COMMIT_MESSAGE.md).
 - [CODING_PATTERNS.md](./CODING_PATTERNS.md) - Coding conventions
+- When asked to create a research plan, research the requested task in details and in depth. You should explore and document
+  all the considerations needed implement the assigned task taking into considering the current code base. At the end of the
+  document you should include a `Clarifications Required:` section with a list of questions for the user so he can clarify
+  and answer questions in one place. This research plan should be saved in a file: .agents/docs/RESEARCH_PLAN.md. This
+  document will be used by the user to iteratively fleshout ideas and design considerations before producings an
+  implementation plan.
 
 ## Commands
 
@@ -83,6 +89,7 @@ No API keys required — fully local. System dependencies:
 
 ## Key Implementation Notes
 
+- **WLS Environment:** Whenver running in WLS all python and pytests need to be run using the .venv-wls venv. If python is not found no the system, you probably need to run in the WLS venv.
 - **Entry point:** `srtgen = "local_srt.cli:main"` in `pyproject.toml`.
 - **Package root:** `src/local_srt/` (src layout).
 - **Lazy loading:** `__init__.py` uses `__getattr__` for on-demand imports; improves CLI startup time.
