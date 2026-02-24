@@ -109,6 +109,7 @@ def transcribe_file(
     device_used: str,
     compute_type_used: str,
     language: Optional[str] = None,
+    initial_prompt: str = "",
     word_level: bool = False,
     mode: PipelineMode = PipelineMode.GENERAL,
     word_output_path: Optional[Path] = None,
@@ -121,6 +122,9 @@ def transcribe_file(
     event_handler: Optional[EventHandler] = None,
 ) -> TranscriptionResult:
     """Transcribe a single media file and write outputs."""
+
+    if initial_prompt is not None:
+        cfg.transcription.initial_prompt = initial_prompt
 
     try:
         result: CoreTranscriptionResult = transcribe_file_internal(
@@ -180,6 +184,7 @@ def transcribe_batch(
     device_used: str,
     compute_type_used: str,
     language: Optional[str] = None,
+    initial_prompt: str = "",
     word_level: bool = False,
     mode: PipelineMode = PipelineMode.GENERAL,
     keep_structure: bool = False,
@@ -192,6 +197,9 @@ def transcribe_batch(
     event_handler: Optional[EventHandler] = None,
 ) -> BatchResult:
     """Transcribe a batch of media files using a single model."""
+
+    if initial_prompt is not None:
+        cfg.transcription.initial_prompt = initial_prompt
 
     files = list(input_paths)
     results: List[TranscriptionResult] = []

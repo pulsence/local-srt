@@ -35,6 +35,7 @@ from .model_management import (
     list_downloaded_models,
 )
 from .models import PipelineMode, ResolvedConfig
+from .script_reader import read_docx
 from . import __version__
 from .system import ensure_parent_dir, ffmpeg_ok
 
@@ -125,6 +126,8 @@ def main() -> int:
     ap.add_argument("--device", choices=["auto", "cpu", "cuda"], default="auto", help="auto/cpu/cuda")
     ap.add_argument("--strict-cuda", action="store_true", help="If set, fail instead of falling back when CUDA init fails.")
     ap.add_argument("--language", default=None, help="Optional language code (e.g., en). If omitted, auto-detect.")
+    ap.add_argument("--prompt", default=None, help="Optional initial prompt text for transcription.")
+    ap.add_argument("--prompt-file", default=None, help="Path to a prompt file (.docx or .txt).")
     ap.add_argument("--word-level", action="store_true", help="Output word-level subtitle cues.")
     ap.add_argument(
         "--no-condition-on-previous-text",
@@ -339,6 +342,18 @@ def main() -> int:
         cfg.transcription.compression_ratio_threshold = float(args.compression_ratio_threshold)
     if args.vad_filter is not None:
         cfg.transcription.vad_filter = args.vad_filter
+
+    if args.prompt:
+        cfg.transcription.initial_prompt = args.prompt
+    if args.prompt_file:
+        prompt_path = Path(args.prompt_file)
+        try:
+            if prompt_path.suffix.lower() == ".docx":
+                cfg.transcription.initial_prompt = read_docx(prompt_path)
+            else:
+                cfg.transcription.initial_prompt = prompt_path.read_text(encoding="utf-8")
+        except Exception as exc:
+            return die(f"Failed to read prompt file: {exc}", 2)
 
     if not ffmpeg_ok():
         return die("ffmpeg not found on PATH. Install it or add it to PATH.", 2)
