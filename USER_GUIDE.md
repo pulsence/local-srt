@@ -180,6 +180,8 @@ Silence-aware splitting and alignment are always enabled.
 
 - `--word-level`: Output one subtitle per word.
 - `--word-srt`: Shorts mode only. Override the word-level SRT output path.
+- `--prompt`: Provide an initial prompt string for transcription.
+- `--prompt-file`: Provide a prompt file (`.docx` or `.txt`) for transcription.
 - `--no-condition-on-previous-text`: Disable conditioning on previous text.
 - `--no-speech-threshold`: Override the no-speech threshold.
 - `--log-prob-threshold`: Override the log probability threshold.
@@ -190,6 +192,41 @@ Notes:
 
 - Word timestamps are always collected so that silence alignment can run and JSON outputs can include per-word timing.
 - Voice activity detection (VAD) is controlled by the config key `vad_filter` (default: true) and can be overridden by `--vad-filter`/`--no-vad-filter`.
+
+## Script Input
+
+Bias transcription with an initial prompt:
+
+- `--prompt "TEXT"`: Provide an initial prompt string.
+- `--prompt-file PATH`: Read a prompt from a `.docx` or `.txt` file.
+
+Notes:
+
+- `.docx` prompts use paragraph text and list items; list items are treated as separate sentence units.
+- Prompts are truncated to roughly 900 characters to stay within Whisper token limits.
+
+## Script-Guided Substitution
+
+Use a script as the authoritative text source at the sentence level:
+
+- `--script PATH`: Provide a `.docx` or `.txt` script file.
+
+Behavior:
+
+- Script sentences replace matched Whisper segment text while preserving segment timestamps.
+- Unmatched audio (ad-libs or skipped lines) keeps the original Whisper text.
+
+## Corrected SRT Alignment
+
+Regenerate word-level outputs from a corrected sentence SRT:
+
+- `--correction-srt PATH`: Align corrected text to Whisper word timestamps.
+
+Shorts workflow:
+
+1. Run `--mode shorts` to generate the sentence SRT.
+2. Edit the sentence SRT text.
+3. Re-run with `--mode shorts --correction-srt corrected.srt` to regenerate the word-level SRT.
 
 ## Batch Processing
 
@@ -236,7 +273,7 @@ Accepted keys (nested JSON object):
 - `formatting`: `max_chars`, `max_lines`, `target_cps`, `min_dur`, `max_dur`
 - `formatting`: `allow_commas`, `allow_medium`, `prefer_punct_splits`
 - `formatting`: `min_gap`, `pad`
-- `transcription`: `vad_filter`
+- `transcription`: `vad_filter`, `initial_prompt`
 - `silence`: `silence_min_dur`, `silence_threshold_db`
 
 Example:

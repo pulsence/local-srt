@@ -18,6 +18,9 @@ All notable changes to this project are documented in this file.
 - Added Shorts mode dual-output: sentence-level SRT plus word-level SRT (default `<stem>.words.srt`, override with `--word-srt`).
 - Added Transcript mode large-block chunker and `transcript` preset for paragraph-style output.
 - Added optional `speaker` label on `SubtitleBlock` with speaker prefixes in SRT/VTT/ASS outputs when set.
+- Added script prompt inputs: `--prompt` and `--prompt-file` (including `.docx` support).
+- Added script-guided substitution with `--script` to replace matched segments using script text.
+- Added corrected SRT alignment with `--correction-srt` for Shorts word-level regeneration.
 
 ### Changed
 

@@ -421,9 +421,9 @@ Implement `PipelineMode.TRANSCRIPT` with a new chunking strategy that merges seg
 
 ---
 
-## Phase 5: Text Accuracy
+## Phase 5: Text Accuracy (COMPLETED)
 
-### 5.1: Script Input Tier 1 — Initial Prompt
+### 5.1: Script Input Tier 1 — Initial Prompt (COMPLETED)
 
 Parse `.docx` Word documents and pass their text as `initial_prompt` to `model.transcribe()`. This biases whisper toward the script's vocabulary, punctuation style, and capitalization with no additional ML dependencies.
 
@@ -461,7 +461,7 @@ Parse `.docx` Word documents and pass their text as `initial_prompt` to `model.t
 
 ---
 
-### 5.2: Corrected SRT Alignment
+### 5.2: Corrected SRT Alignment (COMPLETED)
 
 Accept a corrected sentence-level SRT and derive a word-level SRT by aligning corrected words to whisper word timestamps via `difflib.SequenceMatcher`. This is the core workflow for Shorts: correct the sentence SRT, re-derive the word SRT.
 
@@ -504,7 +504,7 @@ Accept a corrected sentence-level SRT and derive a word-level SRT by aligning co
 
 ---
 
-### 5.3: Script Input Tier 2 — Script-Guided Text Substitution
+### 5.3: Script Input Tier 2 — Script-Guided Text Substitution (COMPLETED)
 
 Use the `.docx` script as the authoritative text source at the sentence level. Script sentences replace matched whisper segment text while preserving whisper timestamps. Unmatched audio (ad-libs, skipped sections) retains whisper text.
 
@@ -543,7 +543,7 @@ Use the `.docx` script as the authoritative text source at the sentence level. S
 
 ---
 
-### 5.4: Code Review — Phase 5
+### 5.4: Code Review — Phase 5 (COMPLETED)
 
 **Tasks**:
 
@@ -556,7 +556,7 @@ Use the `.docx` script as the authoritative text source at the sentence level. S
 
 ---
 
-### 5.5: Changelog — Phase 5
+### 5.5: Changelog — Phase 5 (COMPLETED)
 
 **Tasks**:
 
