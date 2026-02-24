@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import json
 import os
+import re
 import tempfile
 import time
 from dataclasses import dataclass
@@ -25,7 +26,8 @@ from .subtitle_generation import (
     hygiene_and_polish,
     words_to_subtitles,
 )
-from .alignment import align_corrected_srt
+from .alignment import align_corrected_srt, align_script_to_segments
+from .script_reader import read_docx
 from .system import ensure_parent_dir, ffmpeg_ok, probe_duration_seconds
 
 
@@ -65,6 +67,7 @@ def transcribe_file_internal(
     segments_path: Optional[Path],
     json_bundle_path: Optional[Path],
     correction_srt: Optional[Path],
+    script_path: Optional[Path],
     cfg: ResolvedConfig,
     model: Any,
     device_used: str,
@@ -183,6 +186,18 @@ def transcribe_file_internal(
 
         _emit(event_handler, StageEvent(stage="Chunking + formatting", stage_number=3, total_stages=4))
         t1 = time.time()
+        script_applied = False
+        if script_path:
+            if script_path.suffix.lower() == ".docx":
+                script_text = read_docx(script_path)
+            else:
+                script_text = script_path.read_text(encoding="utf-8")
+
+            sentence_re = re.compile(r"[^.!?;]+[.!?;]?")
+            sentences = [m.group().strip() for m in sentence_re.finditer(script_text) if m.group().strip()]
+            if sentences:
+                seg_list = align_script_to_segments(sentences, seg_list)
+                script_applied = True
         silences: List[Tuple[float, float]] = detect_silences(
             tmp_wav,
             min_silence_dur=cfg.silence.silence_min_dur,
@@ -199,7 +214,10 @@ def transcribe_file_internal(
                 raise ValueError("Shorts mode requires word timestamps but none were returned.")
             if not word_output_path:
                 raise ValueError("Shorts mode requires a word_output_path.")
-            subs = chunk_words_to_subtitles(words, cfg, silences)
+            if script_applied:
+                subs = chunk_segments_to_subtitles(seg_list, cfg)
+            else:
+                subs = chunk_words_to_subtitles(words, cfg, silences)
             word_subs = words_to_subtitles(words)
         elif mode == PipelineMode.TRANSCRIPT:
             subs = chunk_segments_to_transcript_blocks(seg_list, cfg, silences)
@@ -208,7 +226,9 @@ def transcribe_file_internal(
                 raise ValueError("Word-level output requested but no word timestamps are available.")
             subs = words_to_subtitles(words)
         else:
-            if words:
+            if script_applied:
+                subs = chunk_segments_to_subtitles(seg_list, cfg)
+            elif words:
                 subs = chunk_words_to_subtitles(words, cfg, silences)
             else:
                 subs = chunk_segments_to_subtitles(seg_list, cfg)

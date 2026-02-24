@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from local_srt.alignment import align_corrected_srt
+from local_srt.alignment import align_corrected_srt, align_script_to_segments
 from local_srt.models import WordItem
 
 
@@ -79,3 +79,54 @@ def test_alignment_word_deletion(tmp_path):
 
     assert len(aligned) == 1
     assert aligned[0].text == "Hello"
+
+
+def test_align_script_matches_all_segments(mock_segments):
+    segments = mock_segments(
+        [
+            {"start": 0.0, "end": 1.0, "text": "Hello there."},
+            {"start": 1.0, "end": 2.0, "text": "General Kenobi."},
+            {"start": 2.0, "end": 3.0, "text": "You are a bold one."},
+        ]
+    )
+    script = ["Hello there!", "General Kenobi.", "You are a bold one."]
+
+    updated = align_script_to_segments(script, segments)
+
+    assert updated[0].text == "Hello there!"
+    assert updated[1].text == "General Kenobi."
+    assert updated[2].text == "You are a bold one."
+
+
+def test_align_script_extra_sentence_dropped(mock_segments):
+    segments = mock_segments(
+        [
+            {"start": 0.0, "end": 1.0, "text": "Hello there."},
+            {"start": 1.0, "end": 2.0, "text": "General Kenobi."},
+            {"start": 2.0, "end": 3.0, "text": "You are a bold one."},
+        ]
+    )
+    script = ["Hello there.", "Extra line.", "General Kenobi.", "You are a bold one."]
+
+    updated = align_script_to_segments(script, segments)
+
+    assert updated[0].text == "Hello there."
+    assert updated[1].text == "General Kenobi."
+    assert updated[2].text == "You are a bold one."
+
+
+def test_align_script_missing_sentence_keeps_whisper(mock_segments):
+    segments = mock_segments(
+        [
+            {"start": 0.0, "end": 1.0, "text": "Hello there."},
+            {"start": 1.0, "end": 2.0, "text": "General Kenobi."},
+            {"start": 2.0, "end": 3.0, "text": "You are a bold one."},
+        ]
+    )
+    script = ["Hello there.", "You are a bold one."]
+
+    updated = align_script_to_segments(script, segments)
+
+    assert updated[0].text == "Hello there."
+    assert updated[1].text == "General Kenobi."
+    assert updated[2].text == "You are a bold one."

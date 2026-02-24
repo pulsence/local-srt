@@ -28,6 +28,8 @@ def read_docx(path: Path) -> str:
             continue
         style_name = getattr(getattr(para, "style", None), "name", "") or ""
         if style_name.startswith("List"):
+            if text[-1] not in ".?!;":
+                text = f"{text}."
             units.append(text)
         else:
             units.append(text)

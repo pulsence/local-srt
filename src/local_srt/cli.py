@@ -129,6 +129,7 @@ def main() -> int:
     ap.add_argument("--prompt", default=None, help="Optional initial prompt text for transcription.")
     ap.add_argument("--prompt-file", default=None, help="Path to a prompt file (.docx or .txt).")
     ap.add_argument("--correction-srt", default=None, help="Corrected sentence-level SRT for word-level alignment.")
+    ap.add_argument("--script", default=None, help="Script file (.docx or .txt) for sentence-level substitution.")
     ap.add_argument("--word-level", action="store_true", help="Output word-level subtitle cues.")
     ap.add_argument(
         "--no-condition-on-previous-text",
@@ -356,6 +357,17 @@ def main() -> int:
         except Exception as exc:
             return die(f"Failed to read prompt file: {exc}", 2)
 
+    script_path: Optional[Path] = None
+    if args.script:
+        script_path = Path(args.script)
+        try:
+            if script_path.suffix.lower() == ".docx":
+                read_docx(script_path)
+            else:
+                script_path.read_text(encoding="utf-8")
+        except Exception as exc:
+            return die(f"Failed to read script file: {exc}", 2)
+
     if not ffmpeg_ok():
         return die("ffmpeg not found on PATH. Install it or add it to PATH.", 2)
 
@@ -456,6 +468,7 @@ def main() -> int:
                 segments_path=segments_out,
                 json_bundle_path=bundle_out,
                 correction_srt=Path(args.correction_srt) if args.correction_srt else None,
+                script_path=script_path,
                 dry_run=args.dry_run,
                 keep_wav=args.keep_wav,
                 tmpdir=Path(args.tmpdir) if args.tmpdir else None,

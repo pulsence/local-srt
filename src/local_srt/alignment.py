@@ -8,10 +8,17 @@ from pathlib import Path
 from typing import List, Tuple
 
 from .models import WordItem
+from .text_processing import normalize_spaces
 
 
 def _normalize_word(word: str) -> str:
     return re.sub(r"[^\w]", "", word.lower())
+
+
+def _normalize_sentence(text: str) -> str:
+    text = normalize_spaces(text).lower()
+    text = re.sub(r"[^a-z0-9\s]", "", text)
+    return normalize_spaces(text)
 
 
 def parse_srt_to_words(srt_path: Path) -> List[Tuple[str, str]]:
@@ -95,3 +102,45 @@ def align_corrected_srt(corrected_srt: Path, words: List[WordItem]) -> List[Word
             continue
 
     return out
+
+
+def _replace_segment_text(segment: object, new_text: str):
+    if hasattr(segment, "_replace"):
+        return segment._replace(text=new_text)
+    try:
+        setattr(segment, "text", new_text)
+    except Exception:
+        pass
+    return segment
+
+
+def align_script_to_segments(script_sentences: List[str], segments: List[object]) -> List[object]:
+    """Replace segment text with script sentences where possible."""
+    script_units: List[str] = []
+    for sent in script_sentences:
+        cleaned = normalize_spaces(sent)
+        if cleaned:
+            script_units.append(cleaned)
+
+    if not script_units:
+        return segments
+
+    segment_texts = [normalize_spaces(getattr(seg, "text", "")) for seg in segments]
+    segment_norm = [_normalize_sentence(t) for t in segment_texts]
+    script_norm = [_normalize_sentence(t) for t in script_units]
+
+    matcher = difflib.SequenceMatcher(None, segment_norm, script_norm)
+    updated = list(segments)
+
+    for tag, i1, i2, j1, j2 in matcher.get_opcodes():
+        if tag not in {"equal", "replace"}:
+            continue
+        count_seg = i2 - i1
+        count_script = j2 - j1
+        common = min(count_seg, count_script)
+        for k in range(common):
+            seg_idx = i1 + k
+            script_idx = j1 + k
+            updated[seg_idx] = _replace_segment_text(segments[seg_idx], script_units[script_idx])
+
+    return updated

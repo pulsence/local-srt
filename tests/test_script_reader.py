@@ -15,8 +15,8 @@ def test_read_docx_paragraphs_and_list_items():
     expected = (
         "This is the first paragraph. "
         "This is the second paragraph. "
-        "First bullet "
-        "Second bullet "
+        "First bullet. "
+        "Second bullet. "
         "Final line."
     )
     assert text == expected
